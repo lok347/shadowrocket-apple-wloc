@@ -39,6 +39,9 @@ DOMAIN-SUFFIX,adsafeprotected.com,REJECT
 
 # Mainland China ad SDKs and telemetry commonly used for ads.
 DOMAIN-SUFFIX,pangolin-sdk-toutiao.com,REJECT
+DOMAIN-SUFFIX,pangolin-dsp-toutiao.com,REJECT
+DOMAIN-SUFFIX,pangolin-sdk-toutiao-b.com,REJECT
+DOMAIN-SUFFIX,pangolin-sdk-toutiao1.com,REJECT
 DOMAIN-SUFFIX,pglstatp-toutiao.com,REJECT
 DOMAIN-SUFFIX,ad.toutiao.com,REJECT
 DOMAIN-SUFFIX,log.snssdk.com,REJECT
@@ -47,8 +50,12 @@ DOMAIN-SUFFIX,sdfp.snssdk.com,REJECT
 DOMAIN-SUFFIX,gdt.qq.com,REJECT
 DOMAIN-SUFFIX,mi.gdt.qq.com,REJECT
 DOMAIN-SUFFIX,win.gdt.qq.com,REJECT
+DOMAIN-SUFFIX,gdtimg.cn,REJECT
+DOMAIN-SUFFIX,gdtimg.com,REJECT
+DOMAIN,pgdt.gtimg.cn,REJECT
 DOMAIN-SUFFIX,l.qq.com,REJECT
 DOMAIN-SUFFIX,mobads.baidu.com,REJECT
+DOMAIN,mobads-logs.baidu.com,REJECT
 DOMAIN-SUFFIX,afd.baidu.com,REJECT
 DOMAIN-SUFFIX,cpro.baidu.com,REJECT
 DOMAIN-SUFFIX,pos.baidu.com,REJECT
@@ -71,6 +78,7 @@ DOMAIN-SUFFIX,ubixioe.com,REJECT
 DOMAIN-SUFFIX,fancyapi.com,REJECT
 DOMAIN-SUFFIX,advlion.com,REJECT
 DOMAIN,sdk.1rtb.net,REJECT
+DOMAIN-SUFFIX,1rtb.net,REJECT
 DOMAIN,sdk.zhangyuyidong.cn,REJECT
 DOMAIN,v.adx.hubcloud.com.cn,REJECT
 DOMAIN,api.htp.hubcloud.com.cn,REJECT
@@ -86,7 +94,9 @@ DOMAIN-SUFFIX,h-adashx.ut.taobao.com,REJECT
 [URL Rewrite]
 # Bilibili direct ad, search-noise, promotion, manga, and shopping endpoints.
 ^https?:\/\/(?:api\.bilibili\.com\/x\/mengqi\/v1\/resource|app\.bili(?:bili\.com|api\.net)\/x\/resource\/peak\/download) - reject-dict
-^http:\/\/upos-sz-static\.bilivideo\.com\/ssaxcode\/\w{2}\/\w{2}\/\w{32}-1-SPLASH - reject-dict
+^https?:\/\/app\.bili(?:bili\.com|api\.net)\/x\/v2\/splash\/(?:event\/list\d*|brand\/list|show|list) - reject-dict
+^https?:\/\/upos-sz-static\.bilivideo\.com\/ssaxcode\/\w{2}\/\w{2}\/[\w-]+-1-SPLASH - reject-200
+^https?:\/\/api\.bilibili\.com\/x\/push\/popup\/setting\? - reject-dict
 ^https?:\/\/app\.bili(?:bili\.com|api\.net)\/x\/v2\/search\/defaultwords - reject-dict
 ^https?:\/\/(?:app\.bili(?:bili\.com|api\.net)|grpc\.biliapi\.net)\/bilibili\.app\.interface\.v1\.Search\/DefaultWords?$ - reject-dict
 ^https?:\/\/app\.bili(?:bili\.com|api\.net)\/bilibili\.app\.interface\.v1\.Search\/Default - reject-dict
@@ -208,7 +218,7 @@ DOMAIN-SUFFIX,h-adashx.ut.taobao.com,REJECT
 
 [Script]
 # One self-hosted JSON cleaner for startup ads, popup ads, and feed ad objects.
-Plus_Bilibili_Clean = type=http-response,requires-body=1,max-size=-1,script-path=https://gist.githubusercontent.com/Y123456-hzy/dd342a1a61daf8c250b112faa1381918/raw/gy-startup-ads-clean.js,pattern=^https?:\/\/(app\.bili(?:bili\.com|api\.net)\/x\/v2\/splash|app\.bili(?:bili\.com|api\.net)\/x\/resource\/show\/tab(?:\/v2|\/bubble)?\?|app\.bili(?:bili\.com|api\.net)\/x\/v2\/account\/mine(?:\/ipad)?\?|app\.bili(?:bili\.com|api\.net)\/x\/v2\/feed\/index(?:\/story)?\?|api\.bilibili\.com\/x\/web-interface\/wbi\/index\/top\/feed\/rcmd\?|app\.bili(?:bili\.com|api\.net)\/x\/v2\/search(?:\/square)?\?|(?:api|app)\.bili(?:bili\.com|api\.net)\/x\/v2\/reply(?:\/(?:wbi\/main|main|reply|hot|dialog\/cursor|detail))?\?|api\.(bilibili|biliapi)\.(com|net)\/pgc\/page\/(bangumi|cinema\/tab)|api\.bilibili\.com\/pgc\/view\/v2\/app\/season\?|api\.bilibili\.com\/pgc\/activity\/deliver\/material\/receive\?|api\.live\.bilibili\.com\/xlive\/app-room\/v1\/index\/getInfoByRoom|api\.vc\.bilibili\.com\/dynamic_svr\/v1\/dynamic_svr\/dynamic_(history|new)\?)
+Plus_Bilibili_Clean = type=http-response,requires-body=1,max-size=-1,script-path=https://gist.githubusercontent.com/Y123456-hzy/dd342a1a61daf8c250b112faa1381918/raw/gy-startup-ads-clean.js,pattern=^https?:\/\/(app\.bili(?:bili\.com|api\.net)\/x\/v2\/splash|app\.bili(?:bili\.com|api\.net)\/x\/resource\/show\/tab(?:\/v2|\/bubble)?\?|app\.bili(?:bili\.com|api\.net)\/x\/resource\/patch\/tab\/v2\?|app\.bili(?:bili\.com|api\.net)\/x\/v2\/account\/mine(?:\/ipad)?\?|app\.bili(?:bili\.com|api\.net)\/x\/v2\/feed\/index(?:\/story)?\?|api\.bilibili\.com\/x\/web-interface\/wbi\/index\/top\/feed\/rcmd\?|app\.bili(?:bili\.com|api\.net)\/x\/v2\/search(?:\/square)?\?|(?:api|app)\.bili(?:bili\.com|api\.net)\/x\/v2\/reply(?:\/(?:wbi\/main|main|reply|hot|dialog\/cursor|detail))?\?|api\.(bilibili|biliapi)\.(com|net)\/pgc\/page\/(bangumi|cinema\/tab)|api\.bilibili\.com\/pgc\/view\/v2\/app\/season\?|api\.bilibili\.com\/pgc\/activity\/deliver\/material\/receive\?|api\.live\.bilibili\.com\/xlive\/app-room\/v1\/index\/getInfoByRoom|api\.vc\.bilibili\.com\/dynamic_svr\/v1\/dynamic_svr\/dynamic_(history|new)\?)
 
 Plus_Shopping_Clean = type=http-response,requires-body=1,max-size=-1,script-path=https://gist.githubusercontent.com/Y123456-hzy/dd342a1a61daf8c250b112faa1381918/raw/gy-startup-ads-clean.js,pattern=^https?:\/\/((?:acs|guide-acs)\.m\.taobao\.com\/gw\/mtop\.(?:taobao\.wireless\.home\.(?:splash|newface)\.awesome\.get|taobao\.cloudvideo\.video\.query|taobao\.volvo\.secondfloor\.getconfig|alibaba\.advertisementservice\.getadv|alimama\.etao\.config\.query|alimusic\.common\.mobileservice\.startinit|etao\.noah\.query|film\.mtopadvertiseapi\.queryadvertise|o2o\.ad\.gateway\.get|taobao\.idle\.home\.welcome|trip\.activity\.querytmsresources|fliggy\.crm\.screen\.(?:allresource|predict))|poplayer\.template\.alibaba\.com\/\w+\.json|api\.m\.jd\.com\/.*functionId=(?:deliverLayer|getTabHomeInfo|home_launchConfig|lite_advertising|myOrderInfo|orderTrackBusiness|personinfoBusiness|queryMaterialAdverts|start|welcomeHome)|api\.(?:yangkeduo|pinduoduo)\.com\/api\/cappuccino\/(?:splash|querySplash)|api\.coolapk\.com\/v6\/(?:main\/(?:dataList|indexV8|init)|page\/dataList|feed\/(?:detail|replyList)))
 

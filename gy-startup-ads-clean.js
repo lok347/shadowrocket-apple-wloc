@@ -634,7 +634,7 @@ function cleanBiliReplyList(obj) {
 }
 
 function cleanBilibili(obj) {
-  if (/\/x\/resource\/show\/tab(?:\/v2|\/bubble)?\?/.test(url)) return cleanBiliTab(obj);
+  if (/\/x\/resource\/(?:show\/tab(?:\/v2|\/bubble)?|patch\/tab\/v2)\?/.test(url)) return cleanBiliTab(obj);
   if (/\/x\/v2\/account\/mine(?:\/ipad)?\?/.test(url)) return cleanBiliMine(obj);
   if (/\/x\/v2\/feed\/index(?:\/story)?\?/.test(url)) return cleanBiliFeedIndex(obj);
   if (/\/x\/web-interface\/wbi\/index\/top\/feed\/rcmd\?/.test(url)) return cleanBiliWebTopFeed(obj);
