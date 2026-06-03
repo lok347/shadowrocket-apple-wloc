@@ -1,5 +1,5 @@
 // GY multi-app ad cleaner for Shadowrocket/Surge-compatible MITM scripting.
-// Self-host this file and reference it from gy-adblock-mitm-plus.sgmodule.
+// Self-host this file and reference it from gy-adblock-mitm-lite.sgmodule.
 
 const url = typeof $request !== "undefined" ? $request.url : "";
 const rawBody = typeof $response !== "undefined" ? $response.body : "";
