@@ -1,0 +1,123 @@
+#!name=GY AdBlock MITM Lite
+#!desc=Conservative MITM ad blocking for Shadowrocket: startup ads, popups, banners, ad SDK calls, and common tracking endpoints.
+#!author=Codex
+#!homepage=https://github.com/YOUR_GITHUB_USER/YOUR_REPO
+#!system=ios
+
+# Usage:
+# 1. Upload this module and gy-startup-ads-clean.js to your GitHub repo root.
+# 2. Replace YOUR_GITHUB_USER/YOUR_REPO in [Script] with your real GitHub path.
+# 3. Import the module raw URL in Shadowrocket.
+# 4. Enable HTTPS Decryption / MITM and trust the Shadowrocket CA certificate in iOS.
+# 5. Do not enable MITM for banking, payment, password manager, or work apps.
+
+[General]
+always-reject-url-rewrite = false
+force-http-engine-hosts = %APPEND% app.bilibili.com,api.bilibili.com,api.zhihu.com,www.zhihu.com,appcloud2.in.zhihu.com,api.m.jd.com,wmapi.meituan.com,hd.mina.mi.com,mi.gdt.qq.com,capis*.didapinche.com,fmapp.chinafamilymart.com.cn,api.xueqiu.com,open.xueqiu.com,dict.youdao.com,api-overmind.youdao.com,m.ctrip.com,newclient.map.baidu.com,optimus-ads.amap.com,mobads.baidu.com,afd.baidu.com,api-access.pangolin-sdk-toutiao.com,api.pangolin-sdk-toutiao.com,api-access.pangolin-sdk-toutiao1.com,ether-pack.pangolin-sdk-toutiao.com,sf3-fe-tos.pglstatp-toutiao.com,api-cfg.wtzw.com,api.zhuishushenqi.com,api.sfacg.com,api.yangkeduo.com,images.pinduoduo.com,router-app-api.jdcloud.com,hdgateway.zto.com,qapi.huolala.cn,appuser-static.huolala.cn,api.maoyan.com,wx.maoyan.com,ad.maoyan.com,api.mcd.cn,dynamicad.kfc.com.cn,orders.kfc.com.cn,mxsa.mxbc.net,webapi.qmai.cn,api.sodalife.xyz
+
+[Rule]
+# Core ad SDKs and ad exchanges.
+DOMAIN-SUFFIX,doubleclick.net,REJECT
+DOMAIN-SUFFIX,googlesyndication.com,REJECT
+DOMAIN-SUFFIX,googleadservices.com,REJECT
+DOMAIN-SUFFIX,adservice.google.com,REJECT
+DOMAIN-SUFFIX,admob.com,REJECT
+DOMAIN-SUFFIX,adsrvr.org,REJECT
+DOMAIN-SUFFIX,adnxs.com,REJECT
+DOMAIN-SUFFIX,criteo.com,REJECT
+DOMAIN-SUFFIX,pubmatic.com,REJECT
+DOMAIN-SUFFIX,rubiconproject.com,REJECT
+DOMAIN-SUFFIX,taboola.com,REJECT
+DOMAIN-SUFFIX,outbrain.com,REJECT
+DOMAIN-SUFFIX,moatads.com,REJECT
+DOMAIN-SUFFIX,doubleverify.com,REJECT
+DOMAIN-SUFFIX,applovin.com,REJECT
+DOMAIN-SUFFIX,inmobi.com,REJECT
+DOMAIN-SUFFIX,supersonicads.com,REJECT
+DOMAIN-SUFFIX,unityads.unity3d.com,REJECT
+DOMAIN-SUFFIX,adsafeprotected.com,REJECT
+
+# Mainland China ad SDKs and telemetry commonly used for ads.
+DOMAIN-SUFFIX,pangolin-sdk-toutiao.com,REJECT
+DOMAIN-SUFFIX,pglstatp-toutiao.com,REJECT
+DOMAIN-SUFFIX,ad.toutiao.com,REJECT
+DOMAIN-SUFFIX,log.snssdk.com,REJECT
+DOMAIN-SUFFIX,extlog.snssdk.com,REJECT
+DOMAIN-SUFFIX,sdfp.snssdk.com,REJECT
+DOMAIN-SUFFIX,gdt.qq.com,REJECT
+DOMAIN-SUFFIX,mi.gdt.qq.com,REJECT
+DOMAIN-SUFFIX,win.gdt.qq.com,REJECT
+DOMAIN-SUFFIX,l.qq.com,REJECT
+DOMAIN-SUFFIX,mobads.baidu.com,REJECT
+DOMAIN-SUFFIX,afd.baidu.com,REJECT
+DOMAIN-SUFFIX,cpro.baidu.com,REJECT
+DOMAIN-SUFFIX,pos.baidu.com,REJECT
+DOMAIN-SUFFIX,wangmeng.baidu.com,REJECT
+DOMAIN-SUFFIX,eclick.baidu.com,REJECT
+DOMAIN-SUFFIX,adash.m.taobao.com,REJECT
+DOMAIN-SUFFIX,adashx.m.taobao.com,REJECT
+DOMAIN-SUFFIX,alimama.com,REJECT
+DOMAIN-SUFFIX,mmstat.com,REJECT
+DOMAIN-SUFFIX,umeng.com,REJECT
+DOMAIN-SUFFIX,umengcloud.com,REJECT
+DOMAIN-SUFFIX,adkwai.com,REJECT
+DOMAIN-SUFFIX,adbkwai.com,REJECT
+DOMAIN-SUFFIX,open.e.kuaishou.com,REJECT
+DOMAIN-SUFFIX,ksapisrv.com,REJECT
+
+[URL Rewrite]
+# Generic ad SDK request/material endpoints. These are deliberately specific, not broad "/ad" matches.
+^https?:\/\/(api-access|api)\.pangolin-sdk-toutiao\d?\.com\/api\/ad\/ - reject-dict
+^https?:\/\/ether-pack\.pangolin-sdk-toutiao\.com\/union\/endcard\/ - reject-200
+^https?:\/\/sf\d+-fe-tos\.pglstatp-toutiao\.com\/obj\/ad-pattern\/ - reject-200
+^https?:\/\/mi\.gdt\.qq\.com\/gdt_mview\.fcg - reject-dict
+^https?:\/\/win\.gdt\.qq\.com\/gdt_mview\.fcg - reject-dict
+^https?:\/\/mobads\.baidu\.com\/.* - reject-dict
+^https?:\/\/afd\.baidu\.com\/afd\/entry - reject-dict
+^https?:\/\/optimus-ads\.amap\.com\/ - reject-200
+^https?:\/\/newclient\.map\.baidu\.com\/client\/crossmarketing - reject-dict
+^https?:\/\/newclient\.map\.baidu\.com\/client\/usersystem\/home\/dynamic - reject-dict
+
+# Startup, splash, popup, banner, and feed ads for common apps.
+^https?:\/\/api\.bilibili\.com\/x\/v2\/dm\/ad - reject-dict
+^https?:\/\/api\.bilibili\.com\/pgc\/season\/app\/related\/recommend - reject-dict
+^https?:\/\/api\.zhihu\.com\/fringe\/ad - reject-dict
+^https?:\/\/api\.zhihu\.com\/commercial_api\/ - reject-dict
+^https?:\/\/api\.zhihu\.com\/brand\/question\/\d+\/card - reject-dict
+^https?:\/\/api\.zhihu\.com\/bazaar\/(float_window|vip_tab\/header) - reject-dict
+^https?:\/\/www\.zhihu\.com\/api\/v\d+\/brand\/question\/\d+\/card - reject-dict
+^https?:\/\/router-app-api\.jdcloud\.com\/v\d\/board\/routerAppSplash - reject-200
+^https?:\/\/m\.ctrip\.com\/restapi\/soa2\/13916\/tripAds - reject-dict
+^https?:\/\/sdkapp\.uve\.weibo\.com\/.+sub_ad_type=splash - reject-dict
+
+# Reading, shopping, food, delivery, travel, and utility apps.
+^https?:\/\/api-cfg\.wtzw\.com\/api\/v\d\/(ad|advert|config) - reject-dict
+^https?:\/\/api\.zhuishushenqi\.com\/advert - reject-dict
+^https?:\/\/api\.sfacg\.com\/ioscfg - reject-200
+^https?:\/\/api\.yangkeduo\.com\/api\/alexa\/(homepage|popup) - reject-dict
+^https?:\/\/images\.pinduoduo\.com\/marketing_api - reject-200
+^https?:\/\/dict\.youdao\.com\/(homepage\/tile|vip\/activity\/couponinfo|course\/tab\/translateTab|dictusertask\/system) - reject-dict
+^https?:\/\/api-overmind\.youdao\.com\/openapi\/get\/luna\/dict\/dict-mobile\/prod\/dictCommonConfig - reject-dict
+^https?:\/\/api\.xueqiu\.com\/lightsnow\/(launch|optional)\/.* - reject-dict
+^https?:\/\/api\.xueqiu\.com\/snowpard\/launch_strategy\/query\.json - reject-dict
+^https?:\/\/open\.xueqiu\.com\/mpaas\/config\/content\?.*(home_visitor_relation_config|cube_detail_bottom_operation_trade_button) - reject-dict
+^https?:\/\/hdgateway\.zto\.com\/(getAdInfo|getApolloConfig|listJumperShow) - reject-dict
+^https?:\/\/qapi\.huolala\.cn\/(ads|get_service_list|home_new_user) - reject-dict
+^https?:\/\/appuser-static\.huolala\.cn\/imgs - reject-200
+^https?:\/\/api\.maoyan\.com\/sns\/common\/feed\/channel\/v2\/list\.json - reject-dict
+^https?:\/\/ad\.maoyan\.com\/api\/position\/detail - reject-dict
+^https?:\/\/wx\.maoyan\.com\/maoyansh\/myshow\/ajax\/ad\/detail - reject-dict
+^https?:\/\/api\.mcd\.cn\/bff\/portal\/home\/hotActivity - reject-dict
+^https?:\/\/dynamicad\.kfc\.com\.cn\/api - reject-dict
+^https?:\/\/orders\.kfc\.com\.cn\/preorder-portal\/api\/v2\/coupon - reject-dict
+^https?:\/\/mxsa\.mxbc\.net\/api\/v1\/adinfo\/ - reject-dict
+^https?:\/\/webapi\.qmai\.cn\/web\/catering\/advertising\/ad - reject-dict
+^https?:\/\/api\.sodalife\.xyz\/v1\/(goods|posters) - reject-dict
+
+[Script]
+# Body rewriting is safer than raw reject for some startup ad APIs because apps expect a valid JSON shape.
+Startup_Ads_Clean = type=http-response,requires-body=1,script-path=https://raw.githubusercontent.com/YOUR_GITHUB_USER/YOUR_REPO/main/gy-startup-ads-clean.js,pattern=^https?:\/\/(app\.bilibili\.com\/x\/v2\/splash\/list|api\.m\.jd\.com\/client\.action\?functionId=start|wmapi\.meituan\.com\/api\/v\d+\/loadInfo|hd\.mina\.mi\.com\/splashscreen\/alert|mi\.gdt\.qq\.com\/gdt_mview\.fcg|fmapp\.chinafamilymart\.com\.cn\/api\/app\/market\/start\/ad|capis(-?\w*)?\.didapinche\.com\/ad\/cx\/startup)
+
+[MITM]
+enable = true
+hostname = %APPEND% app.bilibili.com,api.bilibili.com,api.zhihu.com,www.zhihu.com,appcloud2.in.zhihu.com,api.m.jd.com,wmapi.meituan.com,hd.mina.mi.com,mi.gdt.qq.com,capis*.didapinche.com,fmapp.chinafamilymart.com.cn,api.xueqiu.com,open.xueqiu.com,dict.youdao.com,api-overmind.youdao.com,m.ctrip.com,newclient.map.baidu.com,optimus-ads.amap.com,mobads.baidu.com,afd.baidu.com,api-access.pangolin-sdk-toutiao.com,api.pangolin-sdk-toutiao.com,api-access.pangolin-sdk-toutiao1.com,ether-pack.pangolin-sdk-toutiao.com,sf3-fe-tos.pglstatp-toutiao.com,api-cfg.wtzw.com,api.zhuishushenqi.com,api.sfacg.com,api.yangkeduo.com,images.pinduoduo.com,router-app-api.jdcloud.com,hdgateway.zto.com,qapi.huolala.cn,appuser-static.huolala.cn,api.maoyan.com,wx.maoyan.com,ad.maoyan.com,api.mcd.cn,dynamicad.kfc.com.cn,orders.kfc.com.cn,mxsa.mxbc.net,webapi.qmai.cn,api.sodalife.xyz,sdkapp.uve.weibo.com
