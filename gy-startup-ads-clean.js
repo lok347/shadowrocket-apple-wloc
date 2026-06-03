@@ -725,7 +725,83 @@ function cleanTaobao(obj) {
   return scrub(obj);
 }
 
+function jdQueryValue(name) {
+  const match = url.match(new RegExp("[?&]" + name + "=([^&]+)"));
+  if (!match) return "";
+  try {
+    return decodeURIComponent(match[1].replace(/\+/g, "%20"));
+  } catch (_) {
+    return match[1];
+  }
+}
+
+function jdFunctionId() {
+  return jdQueryValue("functionId");
+}
+
+function isJdHomeResourceUrl() {
+  if (jdFunctionId() !== "universalResourceDetail") return false;
+
+  const body = jdQueryValue("body");
+  if (!body) return false;
+
+  try {
+    const parsed = JSON.parse(body);
+    return parsed?.bizCode === "TN" && /^jdhome_/.test(String(parsed?.microApp || ""));
+  } catch (_) {
+    return body.includes('"bizCode":"TN"') && body.includes('"microApp":"jdhome_');
+  }
+}
+
+function isJdAdResourceUrl() {
+  const id = jdFunctionId();
+  return /^(?:homeAreaPop|searchBoxWord|stationPullService|uniformRecommend\d*|smart_delivery_strategy|getBubble(?:Info|FrequencyRuleInfo)|universalPreDownload(?:ByPreScene)?|getSkinResourcesById|readCustomSurfaceList|xview2Config)$/.test(id) ||
+    isJdHomeResourceUrl();
+}
+
+function clearJdAdEnvelope(obj) {
+  if (!isObject(obj)) return obj;
+
+  for (const root of [obj, obj?.data, obj?.result, obj?.result?.data]) {
+    clearStartupFields(root);
+    if (!isObject(root)) continue;
+
+    for (const key of [
+      "bubble",
+      "bubbleInfo",
+      "data",
+      "floorList",
+      "floors",
+      "images",
+      "items",
+      "list",
+      "material",
+      "materialList",
+      "materials",
+      "resource",
+      "resourceList",
+      "resources",
+      "result",
+      "skin",
+      "skinList",
+      "skins"
+    ]) {
+      if (Object.prototype.hasOwnProperty.call(root, key)) root[key] = emptyLike(root[key]);
+    }
+
+    root.countdown = 0;
+    root.showTimesDaily = 0;
+  }
+
+  return obj;
+}
+
 function cleanJd(obj) {
+  if (isJdAdResourceUrl()) {
+    clearJdAdEnvelope(obj);
+    return scrub(obj);
+  }
+
   for (const root of [obj, obj?.data, obj?.result, obj?.result?.data]) {
     clearStartupFields(root);
     if (!isObject(root)) continue;
@@ -840,7 +916,7 @@ function cleanGenericStartup(obj) {
 function route(obj) {
   if (isBilibiliUrl(url)) return cleanBilibili(obj);
   if (/(?:acs|guide-acs)\.m\.taobao\.com|poplayer\.template\.alibaba\.com/.test(url)) return cleanTaobao(obj);
-  if (/api\.m\.jd\.com\/.*functionId=(deliverLayer|getTabHomeInfo|home_launchConfig|lite_advertising|myOrderInfo|orderTrackBusiness|personinfoBusiness|queryMaterialAdverts|start|welcomeHome)/.test(url)) return cleanJd(obj);
+  if (/api\.m\.jd\.com\/.*functionId=(deliverLayer|getTabHomeInfo|homeAreaPop|home_launchConfig|lite_advertising|myOrderInfo|orderTrackBusiness|personinfoBusiness|queryMaterialAdverts|searchBoxWord|smart_delivery_strategy|start|stationPullService|uniformRecommend\d*|universalPreDownload(?:ByPreScene)?|universalResourceDetail|getBubble(?:Info|FrequencyRuleInfo)|getSkinResourcesById|readCustomSurfaceList|xview2Config|welcomeHome)/.test(url)) return cleanJd(obj);
   if (/api\.(yangkeduo|pinduoduo)\.com\/api\/cappuccino\/(splash|querySplash)/.test(url)) return cleanPdd(obj);
   if (/api\.coolapk\.com\/v6\//.test(url)) return cleanCoolapk(obj);
   if (/wmapi\.meituan\.com|meituan\.com\/api\/v\d\/(openscreen|startpicture|loadInfo)/.test(url)) return cleanMeituan(obj);
