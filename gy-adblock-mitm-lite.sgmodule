@@ -1,15 +1,14 @@
 #!name=GY AdBlock MITM Lite
 #!desc=Conservative MITM ad blocking for Shadowrocket: startup ads, popups, banners, ad SDK calls, and common tracking endpoints.
 #!author=Codex
-#!homepage=https://github.com/YOUR_GITHUB_USER/YOUR_REPO
+#!homepage=https://gist.github.com/Y123456-hzy/dd342a1a61daf8c250b112faa1381918
 #!system=ios
 
 # Usage:
-# 1. Upload this module and gy-startup-ads-clean.js to your GitHub repo root.
-# 2. Replace YOUR_GITHUB_USER/YOUR_REPO in [Script] with your real GitHub path.
-# 3. Import the module raw URL in Shadowrocket.
-# 4. Enable HTTPS Decryption / MITM and trust the Shadowrocket CA certificate in iOS.
-# 5. Do not enable MITM for banking, payment, password manager, or work apps.
+# 1. Import this module raw URL in Shadowrocket:
+#    https://gist.githubusercontent.com/Y123456-hzy/dd342a1a61daf8c250b112faa1381918/raw/gy-adblock-mitm-lite.sgmodule
+# 2. Enable HTTPS Decryption / MITM and trust the Shadowrocket CA certificate in iOS.
+# 3. Do not enable MITM for banking, payment, password manager, or work apps.
 
 [General]
 always-reject-url-rewrite = false
@@ -116,7 +115,7 @@ DOMAIN-SUFFIX,ksapisrv.com,REJECT
 
 [Script]
 # Body rewriting is safer than raw reject for some startup ad APIs because apps expect a valid JSON shape.
-Startup_Ads_Clean = type=http-response,requires-body=1,script-path=https://raw.githubusercontent.com/YOUR_GITHUB_USER/YOUR_REPO/main/gy-startup-ads-clean.js,pattern=^https?:\/\/(app\.bilibili\.com\/x\/v2\/splash\/list|api\.m\.jd\.com\/client\.action\?functionId=start|wmapi\.meituan\.com\/api\/v\d+\/loadInfo|hd\.mina\.mi\.com\/splashscreen\/alert|mi\.gdt\.qq\.com\/gdt_mview\.fcg|fmapp\.chinafamilymart\.com\.cn\/api\/app\/market\/start\/ad|capis(-?\w*)?\.didapinche\.com\/ad\/cx\/startup)
+Startup_Ads_Clean = type=http-response,requires-body=1,script-path=https://gist.githubusercontent.com/Y123456-hzy/dd342a1a61daf8c250b112faa1381918/raw/gy-startup-ads-clean.js,pattern=^https?:\/\/(app\.bilibili\.com\/x\/v2\/splash\/list|api\.m\.jd\.com\/client\.action\?functionId=start|wmapi\.meituan\.com\/api\/v\d+\/loadInfo|hd\.mina\.mi\.com\/splashscreen\/alert|mi\.gdt\.qq\.com\/gdt_mview\.fcg|fmapp\.chinafamilymart\.com\.cn\/api\/app\/market\/start\/ad|capis(-?\w*)?\.didapinche\.com\/ad\/cx\/startup)
 
 [MITM]
 enable = true
