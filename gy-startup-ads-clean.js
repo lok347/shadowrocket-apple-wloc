@@ -396,6 +396,7 @@ function cleanBiliSplashList(obj) {
     "brand_list",
     "client_keep_ids",
     "creative_list",
+    "keep_ids",
     "loaded_creative_list",
     "list",
     "resource_list",
@@ -405,6 +406,7 @@ function cleanBiliSplashList(obj) {
     data[key] = [];
   }
 
+  data.splash_request_id = "";
   obj.code = 0;
   if ("message" in obj) obj.message = "0";
 
