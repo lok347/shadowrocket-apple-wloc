@@ -379,24 +379,34 @@ function cleanBiliSplashList(obj) {
   if (!isObject(obj.data)) obj.data = {};
 
   const data = obj.data;
-  for (const key of ["account", "event_list", "preload", "show"]) delete data[key];
+  for (const key of ["event_list", "preload"]) data[key] = [];
+  for (const key of ["account", "show"]) data[key] = {};
 
   data.max_time = 0;
   data.min_interval = 31536000;
   data.pull_interval = 31536000;
+  data.countdown = 0;
+  data.duration = 0;
+  data.has_more = false;
+  data.is_show = 0;
 
-  for (const key of ["list", "splash_list", "brand_list"]) {
-    if (Array.isArray(data[key])) {
-      for (const item of data[key]) {
-        if (!isObject(item)) continue;
-        item.duration = 0;
-        item.enable_pre_download = false;
-        item.begin_time = 2208960000;
-        item.end_time = 2209046399;
-      }
-      data[key] = [];
-    }
+  // Return explicit empty cache state. Missing fields can make the app reuse
+  // its previous local splash cache when the request itself succeeded.
+  for (const key of [
+    "brand_list",
+    "client_keep_ids",
+    "creative_list",
+    "loaded_creative_list",
+    "list",
+    "resource_list",
+    "splash_list",
+    "topview_ids"
+  ]) {
+    data[key] = [];
   }
+
+  obj.code = 0;
+  if ("message" in obj) obj.message = "0";
 
   return obj;
 }

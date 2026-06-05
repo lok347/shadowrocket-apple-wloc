@@ -94,7 +94,9 @@ DOMAIN-SUFFIX,h-adashx.ut.taobao.com,REJECT
 [URL Rewrite]
 # Bilibili direct ad, search-noise, promotion, manga, and shopping endpoints.
 ^https?:\/\/(?:api\.bilibili\.com\/x\/mengqi\/v1\/resource|app\.bili(?:bili\.com|api\.net)\/x\/resource\/peak\/download) - reject-dict
-^https?:\/\/app\.bili(?:bili\.com|api\.net)\/x\/v2\/splash\/(?:event\/list\d*|brand\/list|show|list) - reject-dict
+# Splash JSON is handled by Plus_Bilibili_Clean so the app receives a valid empty list
+# instead of falling back to previously cached creatives after a rejected request.
+^https?:\/\/grpc\.biliapi\.net\/bilibili\.app\.coldstart\.v1\.ColdStart\/GetColdStartDeferredData$ - reject-dict
 ^https?:\/\/upos-sz-static\.bilivideo\.com\/ssaxcode\/\w{2}\/\w{2}\/[\w-]+-1-SPLASH - reject-200
 ^https?:\/\/api\.bilibili\.com\/x\/push\/popup\/setting\? - reject-dict
 ^https?:\/\/app\.bili(?:bili\.com|api\.net)\/x\/v2\/search\/defaultwords - reject-dict
