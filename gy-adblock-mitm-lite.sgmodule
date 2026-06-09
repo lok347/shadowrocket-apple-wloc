@@ -1,5 +1,5 @@
 #!name=GY AdBlock MITM Fixed
-#!desc=Self-hosted Shadowrocket MITM ad cleaner. Fixed duplicated module/script structure. Added Coolapk speed fix.
+#!desc=Self-hosted Shadowrocket MITM ad cleaner. Fixed duplicated structure. Added Coolapk speed fixes for Pangolin retry.
 #!author=Y123456-hzy
 #!homepage=https://gist.github.com/Y123456-hzy/dd342a1a61daf8c250b112faa1381918
 #!system=ios
@@ -12,11 +12,14 @@ force-http-engine-hosts = %APPEND% app.bilibili.com,app.biliapi.net,api.bilibili
 
 # GY Speed Fix for Coolapk
 
-# 放行广告 SDK 日志，避免 REJECT 后疯狂重试导致酷安启动变慢
+# 放行广告 SDK 日志和统计上报，避免 REJECT 后疯狂重试导致酷安启动变慢
 
 DOMAIN,log-api.pangolin-sdk-toutiao.com,DIRECT
 DOMAIN,log-api.pangolin-sdk-toutiao-b.com,DIRECT
 DOMAIN,log-api.pangolin-sdk-toutiao1.com,DIRECT
+DOMAIN,api-access.pangolin-sdk-toutiao.com,DIRECT
+DOMAIN,api-access.pangolin-sdk-toutiao1.com,DIRECT
+DOMAIN,api-access.pangolin-sdk-toutiao-b.com,DIRECT
 DOMAIN,cnlogs.umeng.com,DIRECT
 DOMAIN,resolve.umeng.com,DIRECT
 DOMAIN,cnlogs.umengcloud.com,DIRECT
@@ -75,16 +78,37 @@ DOMAIN,data.bilibili.com,REJECT
 DOMAIN,popup3.jd.com,REJECT
 
 [URL Rewrite]
-^https?://(?:api-access|api).pangolin-sdk-toutiao\d?.com/api/ad/ - reject-dict
+
+# Pangolin / 穿山甲
+
+# 只拦截真正拉广告和广告配置，不再一刀切拦截 /api/ad/，避免 stats/batch 重试卡顿
+
+^https?://api-access.pangolin-sdk-toutiao\d?.com/api/ad/union/sdk/get_ads/ - reject-dict
+^https?://api-access.pangolin-sdk-toutiao\d?.com/api/ad/union/sdk/settings/ - reject-dict
+^https?://api.pangolin-sdk-toutiao\d?.com/api/ad/union/sdk/get_ads/ - reject-dict
+^https?://api.pangolin-sdk-toutiao\d?.com/api/ad/union/sdk/settings/ - reject-dict
 ^https?://ether-pack.pangolin-sdk-toutiao.com/union/endcard/ - reject-200
 ^https?://sf\d+-fe-tos.pglstatp-toutiao.com/obj/ad-pattern/ - reject-200
+
+# Tencent GDT / 腾讯广告
+
 ^https?://mi.gdt.qq.com/gdt_mview.fcg - reject-dict
+^https?://v2mi.gdt.qq.com/gdt_mview.fcg - reject-dict
 ^https?://win.gdt.qq.com/gdt_mview.fcg - reject-dict
+
+# Baidu Ads / 百度广告
+
 ^https?://mobads.baidu.com/.* - reject-dict
 ^https?://afd.baidu.com/afd/entry - reject-dict
+
+# Amap / 高德地图
+
 ^https?://optimus-ads.amap.com/ - reject-200
 ^https?://m\d.amap.com/ws/valueadded/alimama/splash_screen - reject-200
 ^https?://amap-aos-info-nogw.amap.com/ws/aos/alimama/ - reject-200
+
+# Common app ads
+
 ^https?://images.pinduoduo.com/marketing_api - reject-200
 ^https?://router-app-api.jdcloud.com/v\d/board/routerAppSplash - reject-200
 ^https?://ad.12306.cn/ad/ser/getAdList$ - reject-dict
