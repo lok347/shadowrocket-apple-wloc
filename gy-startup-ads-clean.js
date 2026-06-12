@@ -1,408 +1,330 @@
-// GY multi-app ad cleaner for Shadowrocket / Surge-compatible MITM scripting.
-// Keep this file as pure JavaScript. Do not paste sgmodule content here.
+// GY AdBlock v6 response cleaner for Shadowrocket and Surge-compatible runtimes.
+// Safety model: route allowlist, strong ad markers, known containers, no broad key deletion.
+// v6 changes vs v5:
+//   - container emptying uses cheap emptiness checks instead of JSON.stringify comparison;
+//   - bilibili splash no longer fabricates a `data` object when the response has none;
+//   - behavior contract unchanged: unknown route, non-JSON, or unmodified body pass through as-is.
 
-const DEBUG = false;
+var DEBUG = false;
+var requestUrl =
+  typeof $request !== "undefined" && typeof $request.url === "string"
+    ? $request.url
+    : "";
+var responseBody =
+  typeof $response !== "undefined" && typeof $response.body === "string"
+    ? $response.body
+    : "";
 
-const url = typeof $request !== "undefined" && $request.url ? $request.url : "";
-const rawBody = typeof $response !== "undefined" && typeof $response.body === "string" ? $response.body : "";
+var AD_CONTAINER_KEYS = {
+  ad: true,
+  ads: true,
+  ad_list: true,
+  adList: true,
+  ad_info: true,
+  adInfo: true,
+  advert: true,
+  adverts: true,
+  advertisement: true,
+  advertisements: true,
+  advertInfos: true,
+  splash_ad: true,
+  splashAds: true,
+  startup_ad: true,
+  startupAd: true,
+  open_ad: true,
+  openAd: true,
+  popup_ad: true,
+  popupAd: true,
+  feed_ad: true,
+  feedAd: true,
+  brand_ad: true,
+  brandAd: true,
+  promotion_ad: true,
+  promotionAd: true,
+  commercial: true,
+  commercials: true,
+};
 
-function log(msg) {
-if (DEBUG) console.log("[GY-AdBlock] " + msg);
-}
+var AD_BOOLEAN_KEYS = {
+  is_ad: true,
+  isAd: true,
+  has_ad: true,
+  hasAd: true,
+  show_ad: true,
+  showAd: true,
+  need_ad: true,
+  needAd: true,
+  show_popup_ad: true,
+  showPopupAd: true,
+};
 
-function finish(obj) {
-if (typeof obj === "string") {
-$done({ body: obj });
-return;
-}
-$done({ body: JSON.stringify(obj) });
-}
+var AD_TYPE_TOKENS = {
+  ad: true,
+  ads: true,
+  advert: true,
+  advertisement: true,
+  commercial: true,
+  sponsor: true,
+  sponsored: true,
+  feed_ad: true,
+  brand_ad: true,
+  card_goto_ad: true,
+  splash_ad: true,
+  startup_ad: true,
+  open_ad: true,
+  popup_ad: true,
+};
 
-function isObj(v) {
-return v && typeof v === "object" && !Array.isArray(v);
-}
-
-function lower(s) {
-return String(s || "").toLowerCase();
-}
-
-function hasAny(text, words) {
-const t = lower(text);
-return words.some(w => t.includes(w));
-}
-
-const adWords = [
-"ad",
-"ads",
-"advert",
-"advertise",
-"advertisement",
-"banner",
-"splash",
-"startup",
-"open_screen",
-"openscreen",
-"pop",
-"popup",
-"poplayer",
-"promotion",
-"promote",
-"commercial",
-"sponsor",
-"sponsored",
-"marketing",
-"material",
-"creative",
-"brand_ad",
-"feed_ad",
-"cm_mark",
-"card_goto_ad",
-"adver"
+var EMPTY_BILIBILI_SPLASH_KEYS = [
+  "list",
+  "show",
+  "brand_list",
+  "preload",
+  "splash_list",
 ];
 
-const dropKeyRe = /^(ad|ads|ad_info|adinfo|advert|advertise|advertisement|adverts|banner|banners|splash|splash_ad|splashads|startup|startup_ad|open_ad|openad|open_screen|openscreen|popup|pop_up|popups|poplayer|promotion|promotions|commercial|sponsor|sponsored|marketing|brand_ad|feed_ad|cm_mark|card_goto_ad)$/i;
-
-function hasStructuredAdMarker(value) {
-const text = lower(value);
-return /广告|推广|赞助/.test(text) ||
-/(^|[^a-z0-9])(ad|ads)([^a-z0-9]|$)/.test(text) ||
-/(advert|sponsor|commercial|banner|splash|popup)/.test(text);
-}
-
-function hasVisibleAdLabel(value) {
-const text = lower(value);
-return /广告|推广|赞助/.test(text) ||
-/(^|[^a-z0-9])(advert|advertisement|sponsor|sponsored)([^a-z0-9]|$)/.test(text);
-}
-
-function looksLikeAdObject(obj) {
-if (!isObj(obj)) return false;
-
-const joinedKeys = Object.keys(obj).join("_");
-if (hasAny(joinedKeys, ["ad_info", "advert", "splash", "popup", "promotion", "sponsor"])) {
-return true;
-}
-
-const structuredFields = [
-obj.card_type,
-obj.card_goto,
-obj.goto,
-obj.type,
-obj.source,
-obj.from,
-obj.biz_type,
-obj.module
-];
-if (structuredFields.some(hasStructuredAdMarker)) return true;
-
-const visibleFields = [obj.name, obj.title, obj.desc, obj.reason];
-if (visibleFields.some(hasVisibleAdLabel)) return true;
-
-if (obj.is_ad === true || obj.isAd === true || obj.ad === true || obj.has_ad === true) return true;
-if (typeof obj.ad_id !== "undefined" && String(obj.ad_id) !== "0" && String(obj.ad_id) !== "") return true;
-if (typeof obj.creative_id !== "undefined" && String(obj.creative_id) !== "0" && String(obj.creative_id) !== "") return true;
-
-return false;
-}
-
-function cleanValue(value, parentKey) {
-if (Array.isArray(value)) {
-return value
-.filter(item => !looksLikeAdObject(item))
-.map(item => cleanValue(item, parentKey));
-}
-
-if (!isObj(value)) return value;
-
-for (const key of Object.keys(value)) {
-if (dropKeyRe.test(key)) {
-delete value[key];
-continue;
-}
-
-const v = value[key];
-
-if (Array.isArray(v)) {
-  value[key] = v
-    .filter(item => !looksLikeAdObject(item))
-    .map(item => cleanValue(item, key));
-  continue;
-}
-
-if (isObj(v)) {
-  if (looksLikeAdObject(v) && hasAny(key, adWords)) {
-    delete value[key];
-    continue;
+function debug(message) {
+  if (DEBUG && typeof console !== "undefined") {
+    console.log("[GY-AdBlock-v6] " + message);
   }
-  value[key] = cleanValue(v, key);
-}
 }
 
-return value;
+function donePassThrough() {
+  $done({});
 }
 
-function clearCommonContainers(obj) {
-if (!isObj(obj)) return obj;
+function doneWithBody(value) {
+  $done({ body: JSON.stringify(value) });
+}
 
-const data = isObj(obj.data) ? obj.data : obj;
+function isObject(value) {
+  return value !== null && typeof value === "object" && !Array.isArray(value);
+}
 
-const emptyArrayKeys = [
-"ads",
-"ad",
-"ad_list",
-"adList",
-"advertisements",
-"advertisement",
-"banners",
-"banner",
-"splash",
-"splash_list",
-"splashList",
-"splash_ad",
-"splashAds",
-"startup",
-"startup_ad",
-"open_ad",
-"openAd",
-"popup",
-"popups",
-"pop_list",
-"popList",
-"promotion",
-"promotions"
+function hasOwn(object, key) {
+  return Object.prototype.hasOwnProperty.call(object, key);
+}
+
+function isEnabledFlag(value) {
+  return value === true || value === 1 || value === "1";
+}
+
+function hasPositiveIdentifier(value) {
+  if (value === null || typeof value === "undefined") return false;
+  var text = String(value).trim().toLowerCase();
+  return text !== "" && text !== "0" && text !== "false" && text !== "null";
+}
+
+function normalizeToken(value) {
+  return typeof value === "string" ? value.trim().toLowerCase() : "";
+}
+
+function hasAdTypeToken(value) {
+  var token = normalizeToken(value);
+  if (!token) return false;
+  if (AD_TYPE_TOKENS[token]) return true;
+  return /^(?:ad|ads|cm)(?:[_-]|$)/.test(token);
+}
+
+function hasExplicitAdObject(object) {
+  if (!isObject(object)) return false;
+
+  var booleanKeys = [
+    "is_ad",
+    "isAd",
+    "has_ad",
+    "hasAd",
+    "show_ad",
+    "showAd",
+    "need_ad",
+    "needAd",
+  ];
+  for (var i = 0; i < booleanKeys.length; i += 1) {
+    var booleanKey = booleanKeys[i];
+    if (hasOwn(object, booleanKey) && isEnabledFlag(object[booleanKey])) {
+      return true;
+    }
+  }
+
+  var idKeys = ["ad_id", "adId", "creative_id", "creativeId"];
+  for (var j = 0; j < idKeys.length; j += 1) {
+    var idKey = idKeys[j];
+    if (hasOwn(object, idKey) && hasPositiveIdentifier(object[idKey])) {
+      return true;
+    }
+  }
+
+  if (hasOwn(object, "ad_info") && isObject(object.ad_info)) return true;
+  if (hasOwn(object, "adInfo") && isObject(object.adInfo)) return true;
+
+  var typeKeys = [
+    "card_type",
+    "cardType",
+    "card_goto",
+    "cardGoto",
+    "goto",
+    "type",
+    "item_type",
+    "itemType",
+    "biz_type",
+    "bizType",
+    "module",
+  ];
+  for (var k = 0; k < typeKeys.length; k += 1) {
+    var typeKey = typeKeys[k];
+    if (hasOwn(object, typeKey) && hasAdTypeToken(object[typeKey])) {
+      return true;
+    }
+  }
+
+  return false;
+}
+
+function emptyLike(value) {
+  if (Array.isArray(value)) return [];
+  if (isObject(value)) return {};
+  if (typeof value === "boolean") return false;
+  if (typeof value === "number") return 0;
+  if (typeof value === "string") return "";
+  return value;
+}
+
+// True when emptying the value would not change it. Cheap replacement for the
+// v5 JSON.stringify comparison.
+function isAlreadyEmpty(value) {
+  if (Array.isArray(value)) return value.length === 0;
+  if (isObject(value)) return Object.keys(value).length === 0;
+  if (typeof value === "boolean") return value === false;
+  if (typeof value === "number") return value === 0;
+  if (typeof value === "string") return value === "";
+  return true;
+}
+
+function sanitizeKnownAds(value, state, depth) {
+  if (depth > 40 || state.visited > 50000) return value;
+  state.visited += 1;
+
+  if (Array.isArray(value)) {
+    var filtered = [];
+    for (var i = 0; i < value.length; i += 1) {
+      if (hasExplicitAdObject(value[i])) {
+        state.changed = true;
+        continue;
+      }
+      filtered.push(sanitizeKnownAds(value[i], state, depth + 1));
+    }
+    return filtered;
+  }
+
+  if (!isObject(value)) return value;
+
+  var keys = Object.keys(value);
+  for (var j = 0; j < keys.length; j += 1) {
+    var key = keys[j];
+    var current = value[key];
+
+    if (AD_BOOLEAN_KEYS[key] && current !== false) {
+      value[key] = false;
+      state.changed = true;
+      continue;
+    }
+
+    if (AD_CONTAINER_KEYS[key]) {
+      if (!isAlreadyEmpty(current)) {
+        value[key] = emptyLike(current);
+        state.changed = true;
+      }
+      continue;
+    }
+
+    value[key] = sanitizeKnownAds(current, state, depth + 1);
+  }
+
+  return value;
+}
+
+function clearArrayKey(object, key, state) {
+  if (isObject(object) && Array.isArray(object[key]) && object[key].length > 0) {
+    object[key] = [];
+    state.changed = true;
+  }
+}
+
+function cleanBilibiliSplash(object, state) {
+  if (!isObject(object)) return object;
+
+  // v6: do not fabricate `data` when the response has none; there is nothing
+  // to clean and rewriting the body would be pointless churn.
+  if (isObject(object.data)) {
+    for (var i = 0; i < EMPTY_BILIBILI_SPLASH_KEYS.length; i += 1) {
+      clearArrayKey(object.data, EMPTY_BILIBILI_SPLASH_KEYS[i], state);
+    }
+
+    if (object.data.rule) {
+      object.data.rule = "";
+      state.changed = true;
+    }
+  }
+
+  return sanitizeKnownAds(object, state, 0);
+}
+
+function cleanKnownResponse(object, state) {
+  return sanitizeKnownAds(object, state, 0);
+}
+
+var ROUTES = [
+  {
+    name: "bilibili-splash",
+    pattern: /^https?:\/\/app\.bili(?:bili\.com|api\.net)\/x\/v2\/splash(?:\/|$|\?)/,
+    clean: cleanBilibiliSplash,
+  },
+  {
+    name: "bilibili-feed-and-navigation",
+    pattern: /^https?:\/\/(?:app\.bili(?:bili\.com|api\.net)\/x\/(?:v2\/feed\/index|resource\/show\/tab|resource\/patch\/tab|v2\/search|v2\/account\/mine)|api\.bilibili\.com\/x\/web-interface\/wbi\/index\/top\/feed\/rcmd|api\.vc\.bilibili\.com\/dynamic_svr\/v1\/dynamic_svr\/dynamic_)/,
+    clean: cleanKnownResponse,
+  },
+  {
+    name: "shopping-ad-endpoints",
+    pattern: /^https?:\/\/(?:(?:acs|guide-acs)\.m\.taobao\.com\/gw\/mtop\.(?:taobao\.wireless\.home\.(?:splash|newface)\.awesome\.get|alibaba\.advertisementservice\.getadv|taobao\.idle\.home\.welcome|fliggy\.crm\.screen\.(?:allresource|predict))|acs\.m\.goofish\.com\/gw\/mtop\.taobao\.idlecommerce\.splash|poplayer\.template\.alibaba\.com\/\w+\.json|api\.m\.jd\.com\/.*(?:\?|&)functionId=(?:deliverLayer|homeAreaPop|home_launchConfig|lite_advertising|queryMaterialAdverts|smart_delivery_strategy|start|stationPullService|uniformRecommend\d*|welcomeHome)(?:&|$)|api\.(?:yangkeduo|pinduoduo)\.com\/api\/cappuccino\/(?:splash|querySplash))/,
+    clean: cleanKnownResponse,
+  },
+  {
+    name: "zhihu-ad-feeds",
+    pattern: /^https?:\/\/(?:api\.zhihu\.com\/(?:commercial_api|fringe\/ad|topstory)|web-render\.zhihu\.com\/topstory\/recommend)/,
+    clean: cleanKnownResponse,
+  },
+  {
+    name: "startup-endpoints",
+    pattern: /^https?:\/\/(?:wmapi\.meituan\.com\/api\/v\d+\/(?:loadInfo|startpicture)|[^/]+\.meituan\.com\/api\/v\d\/(?:openscreen|loadInfo|startpicture)|api\.xueqiu\.com\/(?:lightsnow|snowpard)\/|api\.mcd\.cn\/bff\/portal\/(?:home\/splash|richpop)|res\.kfc\.com\.cn\/advertisement|dynamicad\.kfc\.com\.cn\/api|m\d\.amap\.com\/ws\/(?:shield\/dsp\/app\/startup\/init|valueadded\/alimama\/splash_screen)|newclient\.map\.baidu\.com\/client\/(?:crossmarketing|push\/getPushMsg)|app\.58\.com\/api\/home\/(?:advertising|appadv|invite\/popupAdv))/,
+    clean: cleanKnownResponse,
+  },
 ];
 
-for (const key of emptyArrayKeys) {
-if (Array.isArray(data[key])) data[key] = [];
-}
-
-const falseKeys = [
-"has_ad",
-"hasAd",
-"is_ad",
-"isAd",
-"show_ad",
-"showAd",
-"show_popup",
-"showPopup",
-"need_ad",
-"needAd"
-];
-
-for (const key of falseKeys) {
-if (typeof data[key] === "boolean") data[key] = false;
-}
-
-return obj;
-}
-
-function biliClean(obj) {
-if (!isObj(obj)) return obj;
-
-if (url.includes("/x/v2/splash")) {
-obj.code = 0;
-obj.message = obj.message || "0";
-obj.data = obj.data || {};
-obj.data.list = [];
-obj.data.show = [];
-obj.data.brand_list = [];
-obj.data.preload = [];
-obj.data.pull_interval = 86400;
-obj.data.rule = "";
-return obj;
-}
-
-if (url.includes("/x/v2/feed/index") || url.includes("/top/feed/rcmd")) {
-const data = obj.data || {};
-if (Array.isArray(data.items)) data.items = data.items.filter(i => !looksLikeAdObject(i));
-if (Array.isArray(data.item)) data.item = data.item.filter(i => !looksLikeAdObject(i));
-if (Array.isArray(data.cards)) data.cards = data.cards.filter(i => !looksLikeAdObject(i));
-if (Array.isArray(data.card)) data.card = data.card.filter(i => !looksLikeAdObject(i));
-obj.data = data;
-}
-
-if (url.includes("/x/resource/show/tab")) {
-const data = obj.data || {};
-["top", "bottom", "tab", "items"].forEach(k => {
-if (Array.isArray(data[k])) {
-data[k] = data[k].filter(i => !looksLikeAdObject(i));
-}
-});
-obj.data = data;
-}
-
-return cleanValue(clearCommonContainers(obj));
-}
-
-function taobaoClean(obj) {
-if (!isObj(obj)) return obj;
-
-const data = obj.data || {};
-[
-"advertisement",
-"advertisements",
-"ad",
-"ads",
-"splash",
-"splashData",
-"poplayer",
-"popLayer",
-"material",
-"materials",
-"result",
-"model"
-].forEach(k => {
-if (Array.isArray(data[k]) && k !== "result" && k !== "model") data[k] = [];
-if (isObj(data[k]) && hasAny(k, adWords)) data[k] = {};
-});
-
-if (typeof data.result !== "undefined") data.result = cleanValue(data.result, "result");
-if (typeof data.model !== "undefined") data.model = cleanValue(data.model, "model");
-
-obj.data = data;
-return cleanValue(clearCommonContainers(obj));
-}
-
-function jdClean(obj) {
-if (!isObj(obj)) return obj;
-
-const data = obj.data || {};
-[
-"floorList",
-"data",
-"result",
-"popup",
-"popups",
-"advertInfos",
-"bannerList",
-"materialList"
-].forEach(k => {
-if (Array.isArray(data[k])) {
-data[k] = data[k].filter(i => !looksLikeAdObject(i));
-}
-});
-
-obj.data = data;
-return cleanValue(clearCommonContainers(obj));
-}
-
-function pddClean(obj) {
-if (!isObj(obj)) return obj;
-
-const data = obj.result || obj.data || obj;
-[
-"splash",
-"splash_ad",
-"splash_list",
-"popup",
-"popups",
-"ad",
-"ads",
-"banner",
-"banners"
-].forEach(k => {
-if (Array.isArray(data[k])) data[k] = [];
-if (isObj(data[k])) data[k] = {};
-});
-
-return cleanValue(clearCommonContainers(obj));
-}
-
-function zhihuClean(obj) {
-if (!isObj(obj)) return obj;
-
-if (Array.isArray(obj.data)) {
-obj.data = obj.data.filter(i => !looksLikeAdObject(i));
-}
-
-if (isObj(obj.data) && Array.isArray(obj.data.data)) {
-obj.data.data = obj.data.data.filter(i => !looksLikeAdObject(i));
-}
-
-return cleanValue(clearCommonContainers(obj));
-}
-
-function coolapkClean(obj) {
-if (!isObj(obj)) return obj;
-
-if (Array.isArray(obj.data)) {
-obj.data = obj.data.filter(i => !looksLikeAdObject(i));
-}
-
-if (isObj(obj.data) && Array.isArray(obj.data.dataList)) {
-obj.data.dataList = obj.data.dataList.filter(i => !looksLikeAdObject(i));
-}
-
-return cleanValue(clearCommonContainers(obj));
-}
-
-function genericStartupClean(obj) {
-if (!isObj(obj)) return obj;
-
-if (
-hasAny(url, [
-"splash",
-"startup",
-"openscreen",
-"open_ad",
-"startpicture",
-"loadinfo",
-"advertisement",
-"popup",
-"richpop",
-"launch",
-"adver"
-])
-) {
-clearCommonContainers(obj);
-}
-
-return cleanValue(clearCommonContainers(obj));
-}
-
-function route(obj) {
-log("URL: " + url);
-
-if (url.includes("bilibili.com") || url.includes("biliapi.net")) {
-return biliClean(obj);
-}
-
-if (
-url.includes("taobao.com") ||
-url.includes("goofish.com") ||
-url.includes("alicdn.com") ||
-url.includes("alibaba.com")
-) {
-return taobaoClean(obj);
-}
-
-if (url.includes("api.m.jd.com") || url.includes("jdcloud.com")) {
-return jdClean(obj);
-}
-
-if (url.includes("yangkeduo.com") || url.includes("pinduoduo.com")) {
-return pddClean(obj);
-}
-
-if (url.includes("zhihu.com")) {
-return zhihuClean(obj);
-}
-
-if (url.includes("coolapk.com")) {
-return coolapkClean(obj);
-}
-
-return genericStartupClean(obj);
+function findRoute(url) {
+  for (var i = 0; i < ROUTES.length; i += 1) {
+    if (ROUTES[i].pattern.test(url)) return ROUTES[i];
+  }
+  return null;
 }
 
 try {
-if (!rawBody) {
-$done({});
-} else {
-const obj = JSON.parse(rawBody);
-finish(route(obj));
-}
-} catch (e) {
-log("Parse or clean failed: " + e.message);
-$done({});
+  var route = findRoute(requestUrl);
+  if (!route || !responseBody) {
+    donePassThrough();
+  } else {
+    var parsed = JSON.parse(responseBody);
+    var state = { changed: false, visited: 0 };
+    var cleaned = route.clean(parsed, state);
+
+    debug(route.name + " changed=" + state.changed + " visited=" + state.visited);
+    if (state.changed) {
+      doneWithBody(cleaned);
+    } else {
+      donePassThrough();
+    }
+  }
+} catch (error) {
+  debug("pass-through after error: " + error.message);
+  donePassThrough();
 }

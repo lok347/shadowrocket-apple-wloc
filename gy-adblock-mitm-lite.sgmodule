@@ -1,52 +1,48 @@
-#!name=GY AdBlock MITM Fixed v4.1
-#!desc=Repairs the v4 script and MITM host list while keeping the Coolapk retry reduction.
+#!name=GY AdBlock v6
+#!desc=Layered blocking: DIRECT guards -> maintained AWAvenue RULE-SET -> static fallback -> precise rewrites -> allowlisted response cleaning. Coolapk bypasses MITM.
 #!author=Y123456-hzy
 #!homepage=https://gist.github.com/Y123456-hzy/dd342a1a61daf8c250b112faa1381918
 #!system=ios
 
 [General]
 always-reject-url-rewrite = false
-force-http-engine-hosts = %APPEND% app.bilibili.com,app.biliapi.net,api.bilibili.com,api.biliapi.net,grpc.biliapi.net,api.vc.bilibili.com,api.live.bilibili.com,manga.bilibili.com,acs.m.taobao.com,guide-acs.m.taobao.com,acs.m.goofish.com,poplayer.template.alibaba.com,api.m.jd.com,popup3.jd.com,router-app-api.jdcloud.com,api.yangkeduo.com,api.pinduoduo.com,images.pinduoduo.com,api.coolapk.com,api.zhihu.com,www.zhihu.com,web-render.zhihu.com,page-info.zhihu.com,weibointl.api.weibo.cn,api.weibo.cn,mapi.weibo.cn,mapi.weibo.com,edith.xiaohongshu.com,www.xiaohongshu.com,app-api.smzdm.com,homepage-api.smzdm.com,haojia-api.smzdm.com,s-api.smzdm.com,baike-api.smzdm.com,tiebac.baidu.com,c.tieba.baidu.com,wmapi.meituan.com,api.xueqiu.com,api.mcd.cn,res.kfc.com.cn,dynamicad.kfc.com.cn,m5.amap.com,newclient.map.baidu.com,optimus-ads.amap.com,amap-aos-info-nogw.amap.com,mobads.baidu.com,afd.baidu.com,api-access.pangolin-sdk-toutiao.com,api.pangolin-sdk-toutiao.com,api-access.pangolin-sdk-toutiao1.com,api-access.pangolin-sdk-toutiao-b.com,log-api.pangolin-sdk-toutiao.com,log-api.pangolin-sdk-toutiao1.com,gromore.pangolin-sdk-toutiao.com,ether-pack.pangolin-sdk-toutiao.com,sf3-fe-tos.pglstatp-toutiao.com,sf6-fe-tos.pglstatp-toutiao.com,mi.gdt.qq.com,v2mi.gdt.qq.com,win.gdt.qq.com,c3.gdt.qq.com,v3.gdt.qq.com,sdk.e.qq.com,sdkquic.e.qq.com,interface.music.163.com,interface3.music.163.com,magev6.if.qidian.com,api.rr.tv,api.juxingclub.com,ad.12306.cn,app.58.com,api.chelaile.net.cn,web.chelaile.net.cn,app-gw.csdn.net,gab.122.gov.cn,ssp.soulapp.cn,fuss10.elemecdn.com
+force-http-engine-hosts = %APPEND% app.bilibili.com,app.biliapi.net,api.bilibili.com,api.vc.bilibili.com,acs.m.taobao.com,guide-acs.m.taobao.com,acs.m.goofish.com,poplayer.template.alibaba.com,api.m.jd.com,api.yangkeduo.com,api.pinduoduo.com,api.zhihu.com,web-render.zhihu.com,wmapi.meituan.com,api.xueqiu.com,api.mcd.cn,res.kfc.com.cn,dynamicad.kfc.com.cn,m5.amap.com,newclient.map.baidu.com,app.58.com,api-access.pangolin-sdk-toutiao.com,api-access.pangolin-sdk-toutiao1.com,api-access.pangolin-sdk-toutiao-b.com,api.pangolin-sdk-toutiao.com,api.pangolin-sdk-toutiao1.com,api.pangolin-sdk-toutiao-b.com,gromore.pangolin-sdk-toutiao.com,ether-pack.pangolin-sdk-toutiao.com,sf3-fe-tos.pglstatp-toutiao.com,sf6-fe-tos.pglstatp-toutiao.com,mi.gdt.qq.com,v2mi.gdt.qq.com,win.gdt.qq.com,mobads.baidu.com,afd.baidu.com,optimus-ads.amap.com,amap-aos-info-nogw.amap.com,images.pinduoduo.com,router-app-api.jdcloud.com,ad.12306.cn,api.chelaile.net.cn,web.chelaile.net.cn,app-gw.csdn.net,gab.122.gov.cn,ssp.soulapp.cn,fuss10.elemecdn.com
 
 [Rule]
-
-# GY Coolapk Speed Fix v4
-
-# 放行容易疯狂重试的广告 SDK 连接、日志、统计、配置握手。
-
-# 真正广告拉取接口交给 [URL Rewrite] 精准拦截。
-
+# --- Layer 1: DIRECT guards (must stay first; first match wins). ---
+# Coolapk SDK handshakes, config and telemetry must not be domain-rejected,
+# otherwise the SDKs retry-storm and freeze the app. Ad payload fetches on
+# these domains are still blocked by the precise URL Rewrites below.
 DOMAIN-SUFFIX,gdt.qq.com,DIRECT
 DOMAIN-SUFFIX,e.qq.com,DIRECT
 DOMAIN-SUFFIX,pangolin-sdk-toutiao.com,DIRECT
 DOMAIN-SUFFIX,pangolin-sdk-toutiao1.com,DIRECT
+DOMAIN-SUFFIX,pangolin-sdk-toutiao2.com,DIRECT
+DOMAIN-SUFFIX,pangolin-sdk-toutiao3.com,DIRECT
+DOMAIN-SUFFIX,pangolin-sdk-toutiao4.com,DIRECT
+DOMAIN-SUFFIX,pangolin-sdk-toutiao5.com,DIRECT
+DOMAIN-SUFFIX,pangolin-sdk-toutiao-b.com,DIRECT
 DOMAIN-SUFFIX,umeng.com,DIRECT
 DOMAIN-SUFFIX,umengcloud.com,DIRECT
-
-DOMAIN,mi.gdt.qq.com,DIRECT
-DOMAIN,v2mi.gdt.qq.com,DIRECT
-DOMAIN,win.gdt.qq.com,DIRECT
-DOMAIN,c3.gdt.qq.com,DIRECT
-DOMAIN,v3.gdt.qq.com,DIRECT
-DOMAIN,sdk.e.qq.com,DIRECT
-DOMAIN,sdkquic.e.qq.com,DIRECT
-
-DOMAIN,log-api.pangolin-sdk-toutiao.com,DIRECT
-DOMAIN,log-api.pangolin-sdk-toutiao1.com,DIRECT
-DOMAIN,log-api.pangolin-sdk-toutiao-b.com,DIRECT
-DOMAIN,api-access.pangolin-sdk-toutiao.com,DIRECT
-DOMAIN,api-access.pangolin-sdk-toutiao1.com,DIRECT
-DOMAIN,api-access.pangolin-sdk-toutiao-b.com,DIRECT
-DOMAIN,gromore.pangolin-sdk-toutiao.com,DIRECT
-
-DOMAIN,cnlogs.umeng.com,DIRECT
-DOMAIN,resolve.umeng.com,DIRECT
-DOMAIN,cnlogs.umengcloud.com,DIRECT
-DOMAIN,utoken.umeng.com,DIRECT
+DOMAIN,umengacs.m.taobao.com,DIRECT
+DOMAIN,umengjmacs.m.taobao.com,DIRECT
 DOMAIN,adashbc.ut.taobao.com,DIRECT
 DOMAIN,adashxgc.ut.taobao.com,DIRECT
+# Bytedance TNC config service: required by Pangle SDK startup.
+DOMAIN,tnc0-aliec2.zijieapi.com,DIRECT
+DOMAIN,tnc0-alisc1.zijieapi.com,DIRECT
+DOMAIN,tnc0-bjlgy.zijieapi.com,DIRECT
+DOMAIN,tnc3-aliec2.zijieapi.com,DIRECT
 DOMAIN,tnc3-alisc1.zijieapi.com,DIRECT
+DOMAIN,tnc3-alisc2.zijieapi.com,DIRECT
+DOMAIN,tnc3-bjlgy.zijieapi.com,DIRECT
 
+# --- Layer 2: maintained community rule-set (TG-Twilight/AWAvenue-Ads-Rule). ---
+# 900+ ad/tracking domains, continuously updated upstream. Guards above
+# shield the Coolapk-sensitive SDK domains from this list.
+RULE-SET,https://raw.githubusercontent.com/TG-Twilight/AWAvenue-Ads-Rule/main/Filters/AWAvenue-Ads-Rule-Surge-RULE-SET.list,REJECT
+
+# --- Layer 3: static fallback (works even if the RULE-SET fails to download). ---
 DOMAIN-SUFFIX,doubleclick.net,REJECT
 DOMAIN-SUFFIX,googlesyndication.com,REJECT
 DOMAIN-SUFFIX,googleadservices.com,REJECT
@@ -64,21 +60,6 @@ DOMAIN-SUFFIX,doubleverify.com,REJECT
 DOMAIN-SUFFIX,applovin.com,REJECT
 DOMAIN-SUFFIX,inmobi.com,REJECT
 DOMAIN-SUFFIX,unityads.unity3d.com,REJECT
-
-# 不要加这几条，否则酷安会重复重试卡顿：
-
-# DOMAIN-SUFFIX,gdt.qq.com,REJECT
-
-# DOMAIN-SUFFIX,qq.com,REJECT
-
-# DOMAIN-SUFFIX,pangolin-sdk-toutiao.com,REJECT
-
-# DOMAIN-SUFFIX,pangolin-sdk-toutiao1.com,REJECT
-
-# DOMAIN-SUFFIX,umeng.com,REJECT
-
-# DOMAIN-SUFFIX,umengcloud.com,REJECT
-
 DOMAIN-SUFFIX,pangolin-dsp-toutiao.com,REJECT
 DOMAIN-SUFFIX,pglstatp-toutiao.com,REJECT
 DOMAIN-SUFFIX,ad.toutiao.com,REJECT
@@ -106,40 +87,24 @@ DOMAIN,data.bilibili.com,REJECT
 DOMAIN,popup3.jd.com,REJECT
 
 [URL Rewrite]
-
-# Pangolin / 穿山甲
-
-# 只拦截真正拉广告、广告配置、广告素材，不拦截 stats/batch 日志统计。
-
+# Pangolin: block ad/config/material fetches, not telemetry batches.
 ^https?:\/\/api-access\.pangolin-sdk-toutiao(?:\d+|-b)?\.com\/api\/ad\/union\/sdk\/get_ads\/ - reject-dict
 ^https?:\/\/api-access\.pangolin-sdk-toutiao(?:\d+|-b)?\.com\/api\/ad\/union\/sdk\/settings\/ - reject-dict
 ^https?:\/\/api\.pangolin-sdk-toutiao(?:\d+|-b)?\.com\/api\/ad\/union\/sdk\/get_ads\/ - reject-dict
 ^https?:\/\/api\.pangolin-sdk-toutiao(?:\d+|-b)?\.com\/api\/ad\/union\/sdk\/settings\/ - reject-dict
-^https?:\/\/gromore\.pangolin-sdk-toutiao\.com\/api\/ad\/union\/mediation\/config\/ - reject-dict
-^https?:\/\/gromore\.pangolin-sdk-toutiao\.com\/api\/ad\/union\/mediation\/exchange\/ - reject-dict
+^https?:\/\/gromore\.pangolin-sdk-toutiao\.com\/api\/ad\/union\/mediation\/(?:config|exchange)\/ - reject-dict
 ^https?:\/\/ether-pack\.pangolin-sdk-toutiao\.com\/union\/endcard\/ - reject-200
 ^https?:\/\/sf\d+-fe-tos\.pglstatp-toutiao\.com\/obj\/ad-pattern\/ - reject-200
-^https?:\/\/[^/]+\.(?:pglstatp-toutiao|pstatp)\.com\/obj\/ad-pattern\/renderer - reject-200
 
-# GDT / 腾讯广告
-
-# 不拦截整个 gdt.qq.com，只拦截具体广告请求。
-
+# GDT: block ad view/click payloads without rejecting the whole SDK domain.
 ^https?:\/\/(?:mi|v2mi|win)\.gdt\.qq\.com\/gdt_(?:mview|view|click)\.fcg - reject-dict
 
-# Baidu Ads / 百度广告
-
+# High-confidence application ad endpoints.
 ^https?:\/\/mobads\.baidu\.com\/.* - reject-dict
 ^https?:\/\/afd\.baidu\.com\/afd\/entry - reject-dict
-
-# Amap / 高德地图
-
 ^https?:\/\/optimus-ads\.amap\.com\/ - reject-200
 ^https?:\/\/m\d\.amap\.com\/ws\/valueadded\/alimama\/splash_screen - reject-200
 ^https?:\/\/amap-aos-info-nogw\.amap\.com\/ws\/aos\/alimama\/ - reject-200
-
-# Common app ads
-
 ^https?:\/\/images\.pinduoduo\.com\/marketing_api - reject-200
 ^https?:\/\/router-app-api\.jdcloud\.com\/v\d\/board\/routerAppSplash - reject-200
 ^https?:\/\/ad\.12306\.cn\/ad\/ser\/getAdList$ - reject-dict
@@ -151,12 +116,12 @@ DOMAIN,popup3.jd.com,REJECT
 ^https?:\/\/fuss10\.elemecdn\.com\/.+\.mp4 - reject-200
 
 [Script]
-GY_Bilibili_Clean = type=http-response,requires-body=1,max-size=-1,script-path=https://gist.githubusercontent.com/Y123456-hzy/dd342a1a61daf8c250b112faa1381918/raw/gy-startup-ads-clean.js,pattern=^https?:\/\/(app\.bili(?:bili\.com|api\.net)\/x\/v2\/splash|app\.bili(?:bili\.com|api\.net)\/x\/resource\/show\/tab(?:\/v2|\/bubble)?\?|app\.bili(?:bili\.com|api\.net)\/x\/resource\/patch\/tab\/v2\?|app\.bili(?:bili\.com|api\.net)\/x\/v2\/account\/mine(?:\/ipad)?\?|app\.bili(?:bili\.com|api\.net)\/x\/v2\/feed\/index(?:\/story)?\?|api\.bilibili\.com\/x\/web-interface\/wbi\/index\/top\/feed\/rcmd\?|app\.bili(?:bili\.com|api\.net)\/x\/v2\/search(?:\/square)?\?|api\.vc\.bilibili\.com\/dynamic_svr\/v1\/dynamic_svr\/dynamic_(history|new)\?)
-GY_Shopping_Clean = type=http-response,requires-body=1,max-size=-1,script-path=https://gist.githubusercontent.com/Y123456-hzy/dd342a1a61daf8c250b112faa1381918/raw/gy-startup-ads-clean.js,pattern=^https?:\/\/((?:acs|guide-acs)\.m\.taobao\.com\/gw\/mtop\.(?:taobao\.wireless\.home\.(?:splash|newface)\.awesome\.get|taobao\.cloudvideo\.video\.query|taobao\.volvo\.secondfloor\.getconfig|alibaba\.advertisementservice\.getadv|alimama\.etao\.config\.query|alimusic\.common\.mobileservice\.startinit|etao\.noah\.query|film\.mtopadvertiseapi\.queryadvertise|o2o\.ad\.gateway\.get|taobao\.idle\.home\.welcome|trip\.activity\.querytmsresources|fliggy\.crm\.screen\.(?:allresource|predict))|acs\.m\.goofish\.com\/gw\/mtop\.taobao\.idlecommerce\.splash|poplayer\.template\.alibaba\.com\/\w+\.json|api\.m\.jd\.com\/.*functionId=(?:deliverLayer|getTabHomeInfo|homeAreaPop|home_launchConfig|lite_advertising|myOrderInfo|orderTrackBusiness|personinfoBusiness|queryMaterialAdverts|searchBoxWord|smart_delivery_strategy|start|stationPullService|uniformRecommend\d*|universalPreDownload(?:ByPreScene)?|universalResourceDetail|getBubble(?:Info|FrequencyRuleInfo)|getSkinResourcesById|readCustomSurfaceList|xview2Config|welcomeHome)|api\.(?:yangkeduo|pinduoduo)\.com\/api\/cappuccino\/(?:splash|querySplash)|api\.coolapk\.com\/v6\/(?:main\/(?:dataList|indexV8|init)|page\/dataList|feed\/(?:detail|replyList)))
-GY_Feed_Clean = type=http-response,requires-body=1,max-size=-1,script-path=https://gist.githubusercontent.com/Y123456-hzy/dd342a1a61daf8c250b112faa1381918/raw/gy-startup-ads-clean.js,pattern=^https?:\/\/(api\.zhihu\.com\/(?:commercial_api|fringe\/ad|topstory|questions|answers|articles|moments|search|root|people|next-render)|www\.zhihu\.com\/api\/v\d\/|web-render\.zhihu\.com\/topstory\/recommend|page-info\.zhihu\.com\/answers\/v2|weibointl\.api\.weibo\.(?:cn|com)\/portal\.php|mapi\.weibo\.(?:cn|com)\/|api\.weibo\.(?:cn|com)\/|.*\.uve\.weibo\.com\/|[a-z]+\.xiaohongshu\.com\/api\/sns\/v\d+\/(?:note|search|homefeed|system_service)|app-api\.smzdm\.com\/|homepage-api\.smzdm\.com\/|haojia-api\.smzdm\.com\/|baike-api\.smzdm\.com\/|s-api\.smzdm\.com\/|tiebac\.baidu\.com\/|c\.tieba\.baidu\.com\/|magev6\.if\.qidian\.com\/argus\/api\/|interface\d?\.music\.163\.com\/e?api\/|.*\.xima.*\.com\/|api\.juxingclub\.com\/|api\.rr\.tv\/ad\/)
-GY_Startup_Clean = type=http-response,requires-body=1,max-size=-1,script-path=https://gist.githubusercontent.com/Y123456-hzy/dd342a1a61daf8c250b112faa1381918/raw/gy-startup-ads-clean.js,pattern=^https?:\/\/(wmapi\.meituan\.com\/api\/v\d+\/(?:loadInfo|startpicture)|.*\.meituan\.com\/api\/v\d\/(?:openscreen|appstatus|loadInfo|startpicture)|api\.xueqiu\.com\/(?:lightsnow|snowpard)\/.*|api\.mcd\.cn\/bff\/portal\/(?:home\/splash|richpop|home\/hotActivity)|res\.kfc\.com\.cn\/advertisement|dynamicad\.kfc\.com\.cn\/api|m\d\.amap\.com\/ws\/(?:shield\/dsp\/app\/startup\/init|valueadded\/alimama\/splash_screen)|newclient\.map\.baidu\.com\/client\/(?:crossmarketing|usersystem\/home\/dynamic|push\/getPushMsg)|api\.chelaile\.net\.cn\/(?:adpub|goocity\/advert)|web\.chelaile\.net\.cn\/api\/adpub|ad\.12306\.cn\/ad\/ser\/getAdList|app\.58\.com\/api\/home\/(?:advertising|appadv|invite\/popupAdv))
+GY_Bilibili_Clean = type=http-response,requires-body=1,max-size=3145728,script-path=https://gist.githubusercontent.com/Y123456-hzy/dd342a1a61daf8c250b112faa1381918/raw/gy-startup-ads-clean.js,pattern=^https?:\/\/(?:app\.bili(?:bili\.com|api\.net)\/x\/(?:v2\/splash|v2\/feed\/index|resource\/show\/tab|resource\/patch\/tab|v2\/search|v2\/account\/mine)|api\.bilibili\.com\/x\/web-interface\/wbi\/index\/top\/feed\/rcmd|api\.vc\.bilibili\.com\/dynamic_svr\/v1\/dynamic_svr\/dynamic_)
+GY_Shopping_Clean = type=http-response,requires-body=1,max-size=3145728,script-path=https://gist.githubusercontent.com/Y123456-hzy/dd342a1a61daf8c250b112faa1381918/raw/gy-startup-ads-clean.js,pattern=^https?:\/\/(?:(?:acs|guide-acs)\.m\.taobao\.com\/gw\/mtop\.(?:taobao\.wireless\.home\.(?:splash|newface)\.awesome\.get|alibaba\.advertisementservice\.getadv|taobao\.idle\.home\.welcome|fliggy\.crm\.screen\.(?:allresource|predict))|acs\.m\.goofish\.com\/gw\/mtop\.taobao\.idlecommerce\.splash|poplayer\.template\.alibaba\.com\/\w+\.json|api\.m\.jd\.com\/.*(?:\?|&)functionId=(?:deliverLayer|homeAreaPop|home_launchConfig|lite_advertising|queryMaterialAdverts|smart_delivery_strategy|start|stationPullService|uniformRecommend\d*|welcomeHome)(?:&|$)|api\.(?:yangkeduo|pinduoduo)\.com\/api\/cappuccino\/(?:splash|querySplash))
+GY_Zhihu_Clean = type=http-response,requires-body=1,max-size=3145728,script-path=https://gist.githubusercontent.com/Y123456-hzy/dd342a1a61daf8c250b112faa1381918/raw/gy-startup-ads-clean.js,pattern=^https?:\/\/(?:api\.zhihu\.com\/(?:commercial_api|fringe\/ad|topstory)|web-render\.zhihu\.com\/topstory\/recommend)
+GY_Startup_Clean = type=http-response,requires-body=1,max-size=3145728,script-path=https://gist.githubusercontent.com/Y123456-hzy/dd342a1a61daf8c250b112faa1381918/raw/gy-startup-ads-clean.js,pattern=^https?:\/\/(?:wmapi\.meituan\.com\/api\/v\d+\/(?:loadInfo|startpicture)|[^/]+\.meituan\.com\/api\/v\d\/(?:openscreen|loadInfo|startpicture)|api\.xueqiu\.com\/(?:lightsnow|snowpard)\/|api\.mcd\.cn\/bff\/portal\/(?:home\/splash|richpop)|res\.kfc\.com\.cn\/advertisement|dynamicad\.kfc\.com\.cn\/api|m\d\.amap\.com\/ws\/(?:shield\/dsp\/app\/startup\/init|valueadded\/alimama\/splash_screen)|newclient\.map\.baidu\.com\/client\/(?:crossmarketing|push\/getPushMsg)|app\.58\.com\/api\/home\/(?:advertising|appadv|invite\/popupAdv))
 
 [MITM]
 enable = true
-hostname = %APPEND% app.bilibili.com,app.biliapi.net,api.bilibili.com,api.biliapi.net,grpc.biliapi.net,api.vc.bilibili.com,api.live.bilibili.com,manga.bilibili.com,acs.m.taobao.com,guide-acs.m.taobao.com,acs.m.goofish.com,poplayer.template.alibaba.com,api.m.jd.com,popup3.jd.com,router-app-api.jdcloud.com,api.yangkeduo.com,api.pinduoduo.com,images.pinduoduo.com,api.coolapk.com,api.zhihu.com,www.zhihu.com,web-render.zhihu.com,page-info.zhihu.com,weibointl.api.weibo.cn,api.weibo.cn,mapi.weibo.cn,mapi.weibo.com,edith.xiaohongshu.com,www.xiaohongshu.com,app-api.smzdm.com,homepage-api.smzdm.com,haojia-api.smzdm.com,s-api.smzdm.com,baike-api.smzdm.com,tiebac.baidu.com,c.tieba.baidu.com,wmapi.meituan.com,api.xueqiu.com,api.mcd.cn,res.kfc.com.cn,dynamicad.kfc.com.cn,m5.amap.com,newclient.map.baidu.com,optimus-ads.amap.com,amap-aos-info-nogw.amap.com,mobads.baidu.com,afd.baidu.com,api-access.pangolin-sdk-toutiao.com,api.pangolin-sdk-toutiao.com,api-access.pangolin-sdk-toutiao1.com,api-access.pangolin-sdk-toutiao-b.com,log-api.pangolin-sdk-toutiao.com,log-api.pangolin-sdk-toutiao1.com,gromore.pangolin-sdk-toutiao.com,ether-pack.pangolin-sdk-toutiao.com,sf3-fe-tos.pglstatp-toutiao.com,sf6-fe-tos.pglstatp-toutiao.com,mi.gdt.qq.com,v2mi.gdt.qq.com,win.gdt.qq.com,c3.gdt.qq.com,v3.gdt.qq.com,sdk.e.qq.com,sdkquic.e.qq.com,interface.music.163.com,interface3.music.163.com,magev6.if.qidian.com,api.rr.tv,api.juxingclub.com,ad.12306.cn,app.58.com,api.chelaile.net.cn,web.chelaile.net.cn,app-gw.csdn.net,gab.122.gov.cn,ssp.soulapp.cn,fuss10.elemecdn.com
+hostname = %APPEND% app.bilibili.com,app.biliapi.net,api.bilibili.com,api.vc.bilibili.com,acs.m.taobao.com,guide-acs.m.taobao.com,acs.m.goofish.com,poplayer.template.alibaba.com,api.m.jd.com,api.yangkeduo.com,api.pinduoduo.com,api.zhihu.com,web-render.zhihu.com,wmapi.meituan.com,api.xueqiu.com,api.mcd.cn,res.kfc.com.cn,dynamicad.kfc.com.cn,m5.amap.com,newclient.map.baidu.com,app.58.com,api-access.pangolin-sdk-toutiao.com,api-access.pangolin-sdk-toutiao1.com,api-access.pangolin-sdk-toutiao-b.com,api.pangolin-sdk-toutiao.com,api.pangolin-sdk-toutiao1.com,api.pangolin-sdk-toutiao-b.com,gromore.pangolin-sdk-toutiao.com,ether-pack.pangolin-sdk-toutiao.com,sf3-fe-tos.pglstatp-toutiao.com,sf6-fe-tos.pglstatp-toutiao.com,mi.gdt.qq.com,v2mi.gdt.qq.com,win.gdt.qq.com,mobads.baidu.com,afd.baidu.com,optimus-ads.amap.com,amap-aos-info-nogw.amap.com,images.pinduoduo.com,router-app-api.jdcloud.com,ad.12306.cn,api.chelaile.net.cn,web.chelaile.net.cn,app-gw.csdn.net,gab.122.gov.cn,ssp.soulapp.cn,fuss10.elemecdn.com
 h2 = true
