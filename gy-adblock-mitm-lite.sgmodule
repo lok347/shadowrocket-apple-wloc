@@ -29,6 +29,8 @@ DOMAIN,umengjmacs.m.taobao.com,DIRECT
 DOMAIN,adashbc.ut.taobao.com,DIRECT
 DOMAIN,adashxgc.ut.taobao.com,DIRECT
 # Bytedance TNC config service: required by Pangle SDK startup.
+# v6.1: device log showed AWAvenue also rejects TNC on snssdk.com /
+# bytedance.com / toutiaoapi.com, so guard all four domain families.
 DOMAIN,tnc0-aliec2.zijieapi.com,DIRECT
 DOMAIN,tnc0-alisc1.zijieapi.com,DIRECT
 DOMAIN,tnc0-bjlgy.zijieapi.com,DIRECT
@@ -36,6 +38,16 @@ DOMAIN,tnc3-aliec2.zijieapi.com,DIRECT
 DOMAIN,tnc3-alisc1.zijieapi.com,DIRECT
 DOMAIN,tnc3-alisc2.zijieapi.com,DIRECT
 DOMAIN,tnc3-bjlgy.zijieapi.com,DIRECT
+DOMAIN,tnc3-aliec1.toutiaoapi.com,DIRECT
+DOMAIN,tnc3-aliec2.toutiaoapi.com,DIRECT
+DOMAIN,tnc3-alisc1.toutiaoapi.com,DIRECT
+DOMAIN,tnc3-bjlgy.toutiaoapi.com,DIRECT
+DOMAIN,tnc3-aliec2.snssdk.com,DIRECT
+DOMAIN,tnc3-alisc1.snssdk.com,DIRECT
+DOMAIN,tnc3-bjlgy.snssdk.com,DIRECT
+DOMAIN,tnc3-aliec2.bytedance.com,DIRECT
+DOMAIN,tnc3-alisc1.bytedance.com,DIRECT
+DOMAIN,tnc3-bjlgy.bytedance.com,DIRECT
 
 # --- Layer 2: maintained community rule-set (TG-Twilight/AWAvenue-Ads-Rule). ---
 # 900+ ad/tracking domains, continuously updated upstream. Guards above
