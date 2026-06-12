@@ -1,4 +1,4 @@
-#!name=GY AdBlock v6
+#!name=GY AdBlock v6.2
 #!desc=Layered blocking: DIRECT guards -> maintained AWAvenue RULE-SET -> static fallback -> precise rewrites -> allowlisted response cleaning. Coolapk bypasses MITM.
 #!author=Y123456-hzy
 #!homepage=https://gist.github.com/Y123456-hzy/dd342a1a61daf8c250b112faa1381918
@@ -28,6 +28,12 @@ DOMAIN,umengacs.m.taobao.com,DIRECT
 DOMAIN,umengjmacs.m.taobao.com,DIRECT
 DOMAIN,adashbc.ut.taobao.com,DIRECT
 DOMAIN,adashxgc.ut.taobao.com,DIRECT
+# Coolapk startup dependencies rejected by AWAvenue.
+# Rejecting Baichuan correlates with stalling before /v6/main/init.
+DOMAIN,baichuan-sdk.alicdn.com,DIRECT
+DOMAIN,ios.bugly.qq.com,DIRECT
+DOMAIN,mazu.m.qq.com,DIRECT
+DOMAIN,tmfmazu.m.qq.com,DIRECT
 # Bytedance TNC config service: required by Pangle SDK startup.
 # v6.1: device log showed AWAvenue also rejects TNC on snssdk.com /
 # bytedance.com / toutiaoapi.com, so guard all four domain families.
