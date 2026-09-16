@@ -25,10 +25,68 @@
 
 ## 快速开始
 
-1. 在 Shadowrocket 开启 **HTTPS 解密** 与 **HTTP/2 中间人攻击**。
-2. 安装并在 iOS 中 **完全信任 Shadowrocket CA**。
-3. 导入本仓库的 Debug 模块并重新连接 Shadowrocket。
-4. 打开 Apple 地图，同时检查 PacketTunnel 日志。
+### 1. 开启 HTTPS 解密与 HTTP/2 MITM
+
+在 Shadowrocket 的 **HTTPS 解密** 页面开启：
+
+- **HTTPS 解密**
+- **透过 HTTP/2 进行中间人攻击（MitM）**
+
+<img src="./assets/https-mitm-settings.jpg" alt="Shadowrocket HTTPS 解密与 HTTP/2 MITM 设置" width="720">
+
+### 2. 安装并完全信任 Shadowrocket CA
+
+先在 Shadowrocket 中生成并安装 CA，然后进入 iOS：
+
+```text
+设置
+→ 通用
+→ 关于本机
+→ 证书信任设置
+→ Shadowrocket CA
+→ 完全信任
+```
+
+> [!WARNING]
+> 仅安装证书还不够，必须在「证书信任设置」中对 Shadowrocket CA 开启 **完全信任**。
+
+### 3. 导入 Debug 模块并重新连接 Shadowrocket
+
+使用本仓库已验证的 Debug 模块：
+
+- [`ios-location-spoofer-hk-debug.sgmodule`](./modules/ios-location-spoofer-hk-debug.sgmodule)
+- [Raw 配置](https://raw.githubusercontent.com/lok347/shadowrocket-apple-wloc/main/modules/ios-location-spoofer-hk-debug.sgmodule)
+
+导入并启用后，**断开一次 Shadowrocket，再重新连接**，确保 PacketTunnel 重新加载模块。
+
+### 4. 确认 Apple WLOC 域名已进入 HTTPS 解密列表
+
+模块中的 `[MITM] hostname = %APPEND% ...` 会把 Apple WLOC 所需域名加入解密列表。应能看到：
+
+```text
+gs-loc.apple.com
+gs-loc-cn.apple.com
+bluedot.is.autonavi.com
+bluedot.is.autonavi.com.gds.alibabadns.com
+```
+
+<img src="./assets/wloc-domains.jpg" alt="Apple WLOC HTTPS MITM 域名" width="720">
+
+> [!NOTE]
+> 截图中其他与本项目无关的解密域名已裁掉。实践时只需确认上面四个 WLOC 域名存在即可。
+
+### 5. 打开 Apple 地图并查看日志
+
+重新触发系统定位后，打开 Apple 地图，同时在 PacketTunnel 日志中搜索：
+
+```text
+Location spoofer
+clls
+gs-loc
+bluedot
+```
+
+如果出现 `firstWifi=目标坐标` 或 `firstCell=目标坐标`，说明 WLOC response patch 已经命中。
 
 ### 模块文件
 
@@ -36,10 +94,6 @@
 |---|---|
 | [`ios-location-spoofer-hk-debug.sgmodule`](./modules/ios-location-spoofer-hk-debug.sgmodule) | 已验证的香港坐标 Debug 示例 |
 | [`ios-location-spoofer-template.txt`](./modules/ios-location-spoofer-template.txt) | 可复制后自行替换经纬度的模板 |
-
-**Raw 配置：**
-
-- [打开已验证 Debug 配置](https://raw.githubusercontent.com/lok347/shadowrocket-apple-wloc/main/modules/ios-location-spoofer-hk-debug.sgmodule)
 
 > [!TIP]
 > 首次测试建议保留 `debug=true`。确认成功后再改为 `debug=false`。
