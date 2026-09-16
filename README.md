@@ -1,71 +1,90 @@
 # Shadowrocket 修改 Apple WLOC 网络定位
 
+![Platform](https://img.shields.io/badge/platform-iOS-lightgrey)
+![Shadowrocket](https://img.shields.io/badge/Shadowrocket-MITM-blue)
+![Protocol](https://img.shields.io/badge/Apple-WLOC-orange)
+
 > 基于 Shadowrocket HTTPS MITM，对 Apple WLOC（Wi‑Fi / 蜂窝网络定位）响应进行修改。
 >
-> 适用于：iOS 网络定位研究、开发测试、定位链路调试。
+> 适用于：**网络定位研究、开发测试、定位链路调试**。
 
 > [!IMPORTANT]
 > 本项目修改的是 **Apple WLOC 网络定位**，不是 GPS / GNSS，也不是对 CoreLocation Framework 进行 Hook。
-> 因此 Apple 地图可出现目标位置，但第三方 App 仍可能根据 GPS、IP、SIM、定位 SDK 或服务端风控判断真实区域。
+> 因此 Apple 地图出现目标位置，并不代表第三方 App 一定会采用相同位置。
 
-## 目录
+## 30 秒了解
 
-- [项目原理](#项目原理)
-- [环境准备](#环境准备)
-- [Shadowrocket 模块](#shadowrocket-模块)
-- [正确启用顺序](#正确启用顺序)
-- [如何确认是否成功](#如何确认是否成功)
-- [排障流程](#排障流程)
-- [常见问题](#常见问题)
-- [macOS 测试](#macos-测试)
-- [参考项目](#参考项目)
-- [免责声明](#免责声明)
+| 项目 | 说明 |
+|---|---|
+| 修改对象 | Apple WLOC Wi‑Fi / Cell Tower 定位响应 |
+| 实现方式 | Shadowrocket HTTPS MITM + JavaScript response patch |
+| 是否修改 GPS | ❌ |
+| 是否修改 CoreLocation | ❌ |
+| 已验证示例 | `22.285118, 114.159561` |
+| 最重要的验证方式 | 查看 PacketTunnel 日志中的 `firstWifi` / `firstCell` |
+
+## 快速开始
+
+1. 在 Shadowrocket 开启 **HTTPS 解密** 与 **HTTP/2 中间人攻击**。
+2. 安装并在 iOS 中 **完全信任 Shadowrocket CA**。
+3. 导入本仓库的 Debug 模块并重新连接 Shadowrocket。
+4. 打开 Apple 地图，同时检查 PacketTunnel 日志。
+
+### 模块文件
+
+| 文件 | 用途 |
+|---|---|
+| [`ios-location-spoofer-hk-debug.sgmodule`](./modules/ios-location-spoofer-hk-debug.sgmodule) | 已验证的香港坐标 Debug 示例 |
+| [`ios-location-spoofer-template.txt`](./modules/ios-location-spoofer-template.txt) | 可复制后自行替换经纬度的模板 |
+
+**Raw 配置：**
+
+- [打开已验证 Debug 配置](https://raw.githubusercontent.com/lok347/shadowrocket-apple-wloc/main/modules/ios-location-spoofer-hk-debug.sgmodule)
+
+> [!TIP]
+> 首次测试建议保留 `debug=true`。确认成功后再改为 `debug=false`。
 
 ---
 
-## 项目原理
+## 工作原理
 
-核心链路：
-
-```text
-iPhone locationd
-        ↓
-Apple /clls/wloc
-        ↓
-Shadowrocket HTTPS MITM
-        ↓
-location-spoofer.js
-        ↓
-解析 ARPC / protobuf
-        ↓
-修改 Wi‑Fi / Cell Tower 坐标
-        ↓
-重新编码响应
-        ↓
-返回给 iOS
+```mermaid
+flowchart LR
+    A[iPhone locationd] --> B[Apple /clls/wloc]
+    B --> C[Shadowrocket HTTPS MITM]
+    C --> D[location-spoofer.js]
+    D --> E[解析 ARPC / protobuf]
+    E --> F[修改 Wi-Fi / Cell Tower 坐标]
+    F --> G[重新编码响应]
+    G --> H[返回给 iOS]
 ```
 
-Apple WLOC 返回的并不是普通 JSON，而是二进制协议。脚本主要完成三件事：
+Apple WLOC 返回的并不是普通 JSON，而是二进制协议。脚本主要做三件事：
 
-1. 通过 Shadowrocket 拦截 Apple WLOC 请求；
+1. 拦截 Apple WLOC 请求；
 2. 解析 `/clls/wloc` 返回的 ARPC / protobuf；
 3. 修改 Wi‑Fi 与蜂窝基站定位数据后重新封装响应。
 
-主要字段：
+<details>
+<summary><strong>查看 protobuf 字段细节</strong></summary>
+
+### Wi‑Fi
 
 ```text
-Wi-Fi
 AppleWLoc
 └── field 2: wifi_devices
     └── field 2: location
+```
 
-Cellular
+### Cellular
+
+```text
 AppleWLoc
 └── field 22 / 24: cell_tower_response
     └── field 5: location
 ```
 
-位置字段中：
+位置字段：
 
 | 字段 | 含义 |
 |---|---|
@@ -86,22 +105,24 @@ coord × 100000000
 - `motionActivityType`
 - `motionActivityConfidence`
 
+</details>
+
 ---
 
 ## 环境准备
 
 ### 1. Shadowrocket 设置
 
-需要开启：
+开启：
 
 - **HTTPS 解密**
 - **HTTP/2 中间人攻击**
 
 HTTP/2 建议开启，因为 Apple WLOC 请求可能通过 HTTP/2 传输。
 
-### 2. 安装并信任 Shadowrocket CA
+### 2. 安装并完全信任 CA
 
-在 Shadowrocket：
+Shadowrocket：
 
 ```text
 HTTPS 解密
@@ -119,7 +140,7 @@ HTTPS 解密
 → 安装 Shadowrocket CA
 ```
 
-安装完成后继续：
+安装后继续：
 
 ```text
 设置
@@ -135,17 +156,14 @@ HTTPS 解密
 
 ---
 
-## Shadowrocket 模块
+## 已验证示例配置
 
-本仓库提供一个已验证的香港坐标 Debug 示例：
+示例坐标：
 
-- Latitude: `22.285118`
-- Longitude: `114.159561`
-
-### 查看完整配置
-
-- [查看模块文件](./modules/ios-location-spoofer-hk-debug.sgmodule)
-- [打开 Raw 配置](https://raw.githubusercontent.com/lok347/shadowrocket-apple-wloc/main/modules/ios-location-spoofer-hk-debug.sgmodule)
+```text
+Latitude:  22.285118
+Longitude: 114.159561
+```
 
 核心参数：
 
@@ -158,28 +176,19 @@ altitude=530
 debug=true
 ```
 
-首次测试建议：
+完整配置请直接查看：
 
-```text
-debug=true
-```
-
-验证成功后可改为：
-
-```text
-debug=false
-```
+- [GitHub 文件页面](./modules/ios-location-spoofer-hk-debug.sgmodule)
+- [Raw 纯文本](https://raw.githubusercontent.com/lok347/shadowrocket-apple-wloc/main/modules/ios-location-spoofer-hk-debug.sgmodule)
 
 > [!TIP]
-> 修改坐标时，优先只改 `latitude` 和 `longitude`。先确认链路正常，再调整 accuracy、altitude 等参数。
+> 修改坐标时，建议先只改 `latitude` 和 `longitude`。先验证链路正常，再调整 accuracy、altitude 等参数。
 
 ---
 
 ## 正确启用顺序
 
-配置正确，但没有重新建立 PacketTunnel 时，脚本也可能没有加载。
-
-推荐按以下顺序操作：
+配置本身正确，但没有重新建立 PacketTunnel 时，脚本也可能没有重新加载。
 
 1. 关闭旧的 WLOC / `gs-loc` 模块
 2. 开启 **HTTPS 解密**
@@ -194,14 +203,14 @@ debug=false
 11. 打开 Apple 地图
 12. 查看 PacketTunnel 日志
 
-> [!TIP]
-> 首次测试建议在室内进行。室内 GPS / GNSS 信号较弱，Wi‑Fi / Cell 网络定位权重通常更高，更容易观察 WLOC 修改效果。
+> [!NOTE]
+> 首次测试建议在室内进行。室内 GPS / GNSS 信号通常较弱，Wi‑Fi / Cell 网络定位更容易体现。
 
 ---
 
 ## 如何确认是否成功
 
-不要只看地图，最重要的是查看 **Shadowrocket PacketTunnel 日志**。
+不要只看地图。最重要的是查看 **Shadowrocket PacketTunnel 日志**。
 
 建议搜索：
 
@@ -214,15 +223,11 @@ bluedot
 
 ### Wi‑Fi 修改成功
 
-可能看到：
-
 ```text
 Location spoofer patched 400 wifi devices, 0 cell towers
 Location spoofer patched locations:
 firstWifi=22.28511800,114.15956100
 ```
-
-这通常表示：
 
 | 环节 | 状态 |
 |---|---|
@@ -234,15 +239,13 @@ firstWifi=22.28511800,114.15956100
 
 ### 蜂窝基站修改成功
 
-可能看到：
-
 ```text
 Location spoofer patched 0 wifi devices, 121 cell towers
 Location spoofer patched locations:
 firstCell=22.28511800,114.15956100
 ```
 
-这说明蜂窝定位路径也已经被修改。
+如果已经出现 `firstWifi=目标坐标` 或 `firstCell=目标坐标`，说明 protobuf 修改链路已经成功。
 
 ---
 
@@ -259,25 +262,22 @@ flowchart TD
     F -->|否| H[检查 GPS / CoreLocation / 缓存 / 融合定位]
 ```
 
-如果已经看到：
+### 快速判断
 
-```text
-firstWifi=目标坐标
-```
-
-或：
-
-```text
-firstCell=目标坐标
-```
-
-就说明 protobuf 修改已经成功。此时不应继续盲目修改脚本，而应转向检查系统定位融合层。
+| 现象 | 优先检查 |
+|---|---|
+| 完全没有 `Location spoofer` 日志 | MITM、CA、模块是否加载 |
+| 有日志但 `patched = 0` | 本次响应是否包含可修改数据 |
+| `firstWifi` 已正确但地图不变 | GPS / CoreLocation / 缓存 / 融合定位 |
+| 地图位置横跨大陆 | Longitude 正负号 |
+| Apple 地图成功但第三方 App 不认 | App 自有定位或服务端判断 |
 
 ---
 
 ## 常见问题
 
-### 1. 为什么地图跳到另一个大陆？
+<details>
+<summary><strong>为什么地图跳到另一个大陆？</strong></summary>
 
 最典型的问题是 **longitude 正负号写错**。
 
@@ -294,22 +294,18 @@ firstCell=目标坐标
 +112° = 东经 → 亚洲
 ```
 
-所以必须保留 ASCII 半角负号：
+必须保留 ASCII 半角负号：
 
 ```text
 -
 ```
 
-不要误用这些 Unicode 符号：
+不要误用 `−` 或 `–` 等 Unicode 符号。
 
-```text
-−
-–
-```
+</details>
 
-如果“纬度看起来正确，但地图跨到另一个大陆”，第一时间检查 longitude 的正负号。
-
-### 2. 为什么 Apple 地图成功，第三方 App 仍判断不在目标地区？
+<details>
+<summary><strong>为什么 Apple 地图成功，但第三方 App 仍判断不在目标地区？</strong></summary>
 
 本方案修改的是：
 
@@ -330,41 +326,29 @@ Apple WLOC
 - 时区
 - 服务端位置判断
 
-第三方 App 请求 CoreLocation 时，iOS 可能综合：
+第三方 App 获取位置时，iOS 可能综合 GPS、Wi‑Fi、基站、蓝牙和运动传感器生成最终 `CLLocation`。
 
-```text
-GPS
-+ Wi‑Fi
-+ 基站
-+ 蓝牙
-+ 运动传感器
-→ 最终 CLLocation
-```
+因此 Apple 地图成功，并不等于所有 App 都会采用相同位置。
 
-因此：
+</details>
 
-```text
-Apple 地图：网络定位已修改 ✅
-第三方 App：仍判断真实区域 ❌
-```
-
-并不一定代表 WLOC patch 失败。
-
-### 3. 为什么室内更容易测试成功？
+<details>
+<summary><strong>为什么室内更容易测试成功？</strong></summary>
 
 室外 GPS 信号强时，CoreLocation 可能优先采用 GNSS 高精度位置。
 
-室内环境：
-
 ```text
-GPS 弱
+室内 GPS 较弱
 ↓
 Wi‑Fi / Cell 定位权重提高
 ↓
 WLOC patch 更容易体现
 ```
 
-### 4. `failOpen=true` 有什么意义？
+</details>
+
+<details>
+<summary><strong>`failOpen=true` 有什么意义？</strong></summary>
 
 建议保留：
 
@@ -372,23 +356,21 @@ WLOC patch 更容易体现
 failOpen=true
 ```
 
-含义是：
+含义：
 
 ```text
 解析成功 → 修改 response
 解析失败 → 原始 Apple response 正常通过
 ```
 
-这样即使 Apple 后续修改 WLOC 协议结构，通常也只是定位修改失效，而不是整个系统定位服务被阻断。
+这样即使 Apple 后续修改协议结构，通常也只是定位修改失效，而不是整个系统定位服务被阻断。
 
-### 5. 为什么不建议长期打开 raw dump？
+</details>
 
-WLOC 原始请求 / 响应中可能包含：
+<details>
+<summary><strong>为什么不建议长期打开 raw dump？</strong></summary>
 
-- 附近 Wi‑Fi
-- BSSID
-- 蜂窝基站信息
-- 其他位置相关数据
+WLOC 原始请求 / 响应中可能包含附近 Wi‑Fi、BSSID、蜂窝基站及其他位置相关数据。
 
 日常调试通常使用：
 
@@ -399,19 +381,15 @@ dumpRaw=false
 
 即可。
 
+</details>
+
 ---
 
 ## macOS 测试
 
 理论上可以测试，但不能直接假设与 iPhone 完全一致。
 
-如果 macOS 系统定位同样经过：
-
-```text
-/clls/wloc
-```
-
-并且 Shadowrocket for macOS 可以成功 MITM，则相同的 protobuf patch 思路具备可行性。
+如果 macOS 系统定位同样经过 `/clls/wloc`，并且 Shadowrocket for macOS 可以成功 MITM，则相同的 protobuf patch 思路具备可行性。
 
 验证方法：
 
@@ -453,7 +431,7 @@ failOpen=true
 - [batqwq/shadowrocket-location-spoofer](https://github.com/batqwq/shadowrocket-location-spoofer)
 - [acheong08/ios-location-spoofer](https://github.com/acheong08/ios-location-spoofer)
 
-上游 Shadowrocket 项目采用 **GNU Affero General Public License v3.0 (AGPL-3.0)**，二次分发或修改时请同时留意其许可证要求。
+上游 Shadowrocket 项目采用 **GNU Affero General Public License v3.0 (AGPL-3.0)**。如果二次分发或修改上游代码，请同时留意其许可证要求。
 
 ---
 
