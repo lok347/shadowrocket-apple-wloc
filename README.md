@@ -1,4 +1,4 @@
-Shadowrocket 修改 Apple WLOC 网络定位：一次完整实践与排障案例
+Shadowrocket 修改 Apple WLOC 网络定位
 
 适用场景：iOS / Shadowrocket 网络定位研究、开发测试、定位链路调试。
 本文只讨论 Apple WLOC（Wi‑Fi / 蜂窝网络定位）响应修改，不涉及绕过第三方 App 的安全认证、风控或地域限制。
